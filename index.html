@@ -91,7 +91,7 @@
   .topbar .subtitle{color:var(--text-dim);font-size:14px;margin-top:2px;}
   .content{padding:20px 32px 60px;flex:1;}
 
-  /* road-dash divider (signature element) */
+  /* road-dash divider */
   .road{
     height:5px;border-radius:3px;margin:18px 0 22px;
     background:repeating-linear-gradient(90deg, var(--yellow) 0 22px, transparent 22px 40px);
@@ -108,7 +108,6 @@
   .btn-primary:hover{background:var(--yellow-dim);border-color:var(--yellow-dim);}
   .btn-danger{color:var(--red);}
   .btn-sm{padding:6px 11px;font-size:12.5px;}
-  .btn-icon{width:34px;height:34px;padding:0;justify-content:center;}
 
   .grid{display:grid;gap:14px;}
   .grid-cards{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));}
@@ -143,7 +142,6 @@
     font-family:var(--font-display);font-weight:700;font-size:20px;margin:26px 0 12px;
     display:flex;align-items:center;justify-content:space-between;
   }
-  .section-title .btn{font-size:13px;}
 
   table{width:100%;border-collapse:collapse;font-size:13.5px;}
   thead th{
@@ -220,10 +218,6 @@
   .toast.error{border-left-color:var(--red);}
   .toast.success{border-left-color:var(--green);}
 
-  .config-box{max-width:520px;}
-  .config-box p{color:var(--text-dim);font-size:13.5px;line-height:1.6;}
-  .config-box code{background:var(--plate);padding:1px 6px;border-radius:4px;font-family:var(--font-mono);font-size:12.5px;}
-
   .loading{color:var(--text-faint);font-size:13.5px;padding:20px 0;}
 
   .stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
@@ -233,8 +227,6 @@
   }
   .stat .v{font-family:var(--font-mono);font-size:22px;color:var(--yellow);font-weight:700;}
   .stat .l{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
-
-  select#driverFilter{max-width:220px;}
 
   @media (max-width:820px){
     #app{flex-direction:column;}
@@ -259,14 +251,6 @@
 /* =========================================================
    ESTADO
 ========================================================= */
-// Credenciales por defecto de tu proyecto Supabase.
-// Se usan automáticamente si no hay ninguna configuración guardada.
-// Puedes cambiarlas en cualquier momento desde la pestaña "Configuración".
-const DEFAULT_SUPABASE_CONFIG = {
-  url: 'https://lirflipqomvxyrymocsi.supabase.co',
-  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcmZsaXBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI3MTc4MzcsImV4cCI6MjA0ODI5NzgzN30.4KMEM0JZ3Jw3eM2n1TQtKRfKcB0eJnU1hJ2K5rX9L6Y',
-};
-
 const state = {
   tab: 'inicio',
   drivers: [],
@@ -275,8 +259,7 @@ const state = {
   notes: [],
   links: [],
   loaded: false,
-  connectionError: null,
-  modal: null,           // {type, data}
+  modal: null,
 };
 
 const TABS = [
@@ -287,117 +270,65 @@ const TABS = [
   {id:'notas', label:'Notas y Recordatorios', icon:'&#128221;'},
   {id:'enlaces', label:'Enlaces de interés', icon:'&#128279;'},
 ];
-/* =========================================================
-<<<<<<< HEAD
-   CLIENTE SUPABASE (REST / PostgREST) — vía servidor local
-=======
-   PERSISTENCIA DE CONFIGURACIÓN (Claude storage, solo la config)
-========================================================= */
-async function loadConfig(){
-  try{
-    const r = await window.storage.get('supabase-config', false);
-    if(r && r.value){ state.config = JSON.parse(r.value); return; }
-  }catch(e){ /* no config guardada todavía */ }
-  // sin config guardada -> usar las credenciales por defecto
-  state.config = { ...DEFAULT_SUPABASE_CONFIG };
-}
-async function saveConfig(cfg){
-  await window.storage.set('supabase-config', JSON.stringify(cfg), false);
-  state.config = cfg;
-}
 
 /* =========================================================
-   CLIENTE SUPABASE (REST / PostgREST)
->>>>>>> 8f73bf25a7c8a33e77ce68dce593d8140b6f036c
+   ALMACENAMIENTO LOCAL (PERSISTENCIA SIN SERVIDOR)
 ========================================================= */
-async function supaRequest(path, opts={}){
-  const method = opts.method || 'GET';
-<<<<<<< HEAD
-  const headers = {};
-=======
-  const headers = {
-    'apikey': cfg.key,
+const storage = {
+  get: (key) => {
+    try {
+      return JSON.parse(localStorage.getItem('rutactrl_' + key) || '[]');
+    } catch(e) {
+      return [];
+    }
+  },
+  set: (key, data) => {
+    localStorage.setItem('rutactrl_' + key, JSON.stringify(data));
+  }
+};
+
+function createCrud(table) {
+  return {
+    list: async () => storage.get(table),
+    create: async (item) => {
+      const items = storage.get(table);
+      const newItem = { 
+        ...item, 
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'id_' + Date.now() + Math.random().toString(36).substr(2, 9), 
+        created_at: new Date().toISOString() 
+      };
+      items.unshift(newItem);
+      storage.set(table, items);
+      return newItem;
+    },
+    update: async (id, data) => {
+      const items = storage.get(table);
+      const idx = items.findIndex(x => String(x.id) === String(id));
+      if (idx !== -1) {
+        items[idx] = { ...items[idx], ...data };
+        storage.set(table, items);
+        return items[idx];
+      }
+      return null;
+    },
+    remove: async (id) => {
+      const items = storage.get(table).filter(x => String(x.id) !== String(id));
+      storage.set(table, items);
+      return true;
+    }
   };
-  // Las claves "anon" clásicas son JWT (empiezan por "eyJ") y PostgREST
-  // necesita también recibirlas en Authorization: Bearer para resolver el rol.
-  // Las claves nuevas (sb_publishable_..., sb_secret_...) NO son JWT y NO
-  // deben mandarse en Authorization: Bearer, o Supabase responde 401.
-  if(cfg.key.startsWith('eyJ')){
-    headers['Authorization'] = 'Bearer ' + cfg.key;
-  }
->>>>>>> 8f73bf25a7c8a33e77ce68dce593d8140b6f036c
-  if(method !== 'GET' && method !== 'DELETE'){
-    headers['Content-Type'] = 'application/json';
-  }
-  let res;
-  try{
-    res = await fetch('/api/' + path, {
-      method,
-      headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
-    });
-  }catch(networkErr){
-    throw new Error('No se pudo contactar con el servidor local. ¿Sigue corriendo "node server.js" en la terminal?');
-  }
-<<<<<<< HEAD
-=======
-  const url = cfg.url.replace(/\/$/,'') + '/rest/v1/' + path;
-  let res;
-  try{
-    res = await fetch(url, {
-      method,
-      headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
-    });
-  }catch(networkErr){
-    throw new Error('No se pudo conectar con ' + cfg.url + '. Revisa: 1) que el proyecto no esté en pausa (Supabase lo pausa tras inactividad, hay que pulsar "Restore project" en el dashboard), 2) que la URL esté bien escrita, 3) tu conexión a internet.');
-  }
->>>>>>> 8f73bf25a7c8a33e77ce68dce593d8140b6f036c
-  if(!res.ok){
-    let msg = 'Error ' + res.status;
-    try{ const j = await res.json(); msg += ': ' + (j.message || JSON.stringify(j)); }catch(e){}
-    throw new Error(msg);
-  }
-  if(res.status === 204) return null;
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
 }
 
 const api = {
-  drivers: {
-    list: () => supaRequest('drivers?select=*&order=created_at.desc'),
-    create: (d) => supaRequest('drivers', {method:'POST', body:d}),
-    update: (id,d) => supaRequest('drivers?id=eq.'+id, {method:'PATCH', body:d}),
-    remove: (id) => supaRequest('drivers?id=eq.'+id, {method:'DELETE'}),
-  },
-  trips: {
-    list: () => supaRequest('trips?select=*&order=created_at.desc'),
-    create: (d) => supaRequest('trips', {method:'POST', body:d}),
-    update: (id,d) => supaRequest('trips?id=eq.'+id, {method:'PATCH', body:d}),
-    remove: (id) => supaRequest('trips?id=eq.'+id, {method:'DELETE'}),
-  },
-  rests: {
-    list: () => supaRequest('rests?select=*&order=start_time.desc'),
-    create: (d) => supaRequest('rests', {method:'POST', body:d}),
-    update: (id,d) => supaRequest('rests?id=eq.'+id, {method:'PATCH', body:d}),
-    remove: (id) => supaRequest('rests?id=eq.'+id, {method:'DELETE'}),
-  },
-  notes: {
-    list: () => supaRequest('notes?select=*&order=reminder_at.asc.nullslast'),
-    create: (d) => supaRequest('notes', {method:'POST', body:d}),
-    update: (id,d) => supaRequest('notes?id=eq.'+id, {method:'PATCH', body:d}),
-    remove: (id) => supaRequest('notes?id=eq.'+id, {method:'DELETE'}),
-  },
-  links: {
-    list: () => supaRequest('links?select=*&order=created_at.desc'),
-    create: (d) => supaRequest('links', {method:'POST', body:d}),
-    update: (id,d) => supaRequest('links?id=eq.'+id, {method:'PATCH', body:d}),
-    remove: (id) => supaRequest('links?id=eq.'+id, {method:'DELETE'}),
-  },
+  drivers: createCrud('drivers'),
+  trips: createCrud('trips'),
+  rests: createCrud('rests'),
+  notes: createCrud('notes'),
+  links: createCrud('links'),
 };
 
 /* =========================================================
-   UTIL
+   UTILIDADES
 ========================================================= */
 function esc(s){
   if(s===null||s===undefined) return '';
@@ -419,11 +350,12 @@ function initials(name){
   return (name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 }
 function driverName(id){
-  const d = state.drivers.find(x=>x.id===id);
+  const d = state.drivers.find(x=>String(x.id)===String(id));
   return d ? d.name : '—';
 }
 function toast(msg, kind){
   const wrap = document.getElementById('toastWrap');
+  if(!wrap) return;
   const el = document.createElement('div');
   el.className = 'toast ' + (kind||'');
   el.textContent = msg;
@@ -453,10 +385,8 @@ async function loadAll(){
     state.notes = notes || [];
     state.links = links || [];
     state.loaded = true;
-    state.connectionError = null;
   }catch(e){
-    state.connectionError = e.message;
-    toast(e.message, 'error');
+    toast('Error al leer datos locales: ' + e.message, 'error');
   }
   render();
 }
@@ -482,8 +412,8 @@ function render(){
       </ul>
       <div class="sidebar-foot">
         <div class="status-pill">
-          <span class="dot ${state.connectionError ? 'off' : (state.loaded?'ok':'')}"></span>
-          ${state.connectionError ? 'Sin conexión con el servidor' : (state.loaded ? 'Conectado' : 'Conectando…')}
+          <span class="dot ok"></span>
+          Modo Local Activo
         </div>
       </div>
     </div>
@@ -549,14 +479,7 @@ function bindNav(){
    RENDER: CONTENIDO POR PESTAÑA
 ========================================================= */
 function renderContent(){
-  if(state.connectionError){
-    return `<div class="empty">No se pudo conectar con el servidor local.<br><br>
-      <span style="color:var(--red);font-family:var(--font-mono);font-size:12.5px;">${esc(state.connectionError)}</span><br><br>
-      Comprueba que sigues teniendo "node server.js" corriendo en la terminal, y pulsa
-      <button class="btn btn-sm" data-action="retry-load">Reintentar</button></div>`;
-  }
   if(!state.loaded) return `<div class="loading">Cargando datos…</div>`;
-
   if(state.tab === 'inicio') return renderInicio();
   if(state.tab === 'camioneros') return renderCamioneros();
   if(state.tab === 'viajes') return renderViajes();
@@ -567,9 +490,6 @@ function renderContent(){
 }
 
 function bindTabContent(){
-  const retry = document.querySelector('[data-action="retry-load"]');
-  if(retry) retry.addEventListener('click', ()=> loadAll());
-
   if(state.tab === 'inicio') bindInicio();
   if(state.tab === 'camioneros') bindCamioneros();
   if(state.tab === 'viajes') bindViajes();
@@ -600,9 +520,9 @@ function renderInicio(){
   `;
 }
 function driverCardHtml(d){
-  const kmTotal = state.trips.filter(t=>t.driver_id===d.id)
+  const kmTotal = state.trips.filter(t=>String(t.driver_id)===String(d.id))
     .reduce((sum,t)=> sum + (Number(t.km_end||0) - Number(t.km_start||0) > 0 ? (Number(t.km_end||0)-Number(t.km_start||0)) : 0), 0);
-  const restCount = state.rests.filter(r=>r.driver_id===d.id).length;
+  const restCount = state.rests.filter(r=>String(r.driver_id)===String(d.id)).length;
   return `
     <div class="card driver-card card-hover" data-driver="${d.id}">
       <div class="avatar">${esc(initials(d.name))}</div>
@@ -659,7 +579,7 @@ function renderCamioneros(){
 }
 function bindCamioneros(){
   document.querySelectorAll('[data-edit-driver]').forEach(b=>{
-    b.addEventListener('click', ()=> openModal('driver', state.drivers.find(d=>d.id===b.dataset.editDriver)));
+    b.addEventListener('click', ()=> openModal('driver', state.drivers.find(d=>String(d.id)===String(b.dataset.editDriver))));
   });
   document.querySelectorAll('[data-del-driver]').forEach(b=>{
     b.addEventListener('click', async ()=>{
@@ -717,11 +637,11 @@ function bindViajes(){
   if(filter) filter.addEventListener('change', ()=>{
     const v = filter.value;
     document.querySelectorAll('[data-driver-row]').forEach(row=>{
-      row.style.display = (!v || row.dataset.driverRow===v) ? '' : 'none';
+      row.style.display = (!v || String(row.dataset.driverRow)===String(v)) ? '' : 'none';
     });
   });
   document.querySelectorAll('[data-edit-trip]').forEach(b=>{
-    b.addEventListener('click', ()=> openModal('trip', state.trips.find(t=>t.id===b.dataset.editTrip)));
+    b.addEventListener('click', ()=> openModal('trip', state.trips.find(t=>String(t.id)===String(b.dataset.editTrip))));
   });
   document.querySelectorAll('[data-del-trip]').forEach(b=>{
     b.addEventListener('click', async ()=>{
@@ -778,7 +698,7 @@ function restRowHtml(r){
 }
 function bindDescansos(){
   document.querySelectorAll('[data-edit-rest]').forEach(b=>{
-    b.addEventListener('click', ()=> openModal('rest', state.rests.find(r=>r.id===b.dataset.editRest)));
+    b.addEventListener('click', ()=> openModal('rest', state.rests.find(r=>String(r.id)===String(b.dataset.editRest))));
   });
   document.querySelectorAll('[data-del-rest]').forEach(b=>{
     b.addEventListener('click', async ()=>{
@@ -816,7 +736,7 @@ function renderNotas(){
 function bindNotas(){
   bindNoteToggles();
   document.querySelectorAll('[data-edit-note]').forEach(b=>{
-    b.addEventListener('click', ()=> openModal('note', state.notes.find(n=>n.id===b.dataset.editNote)));
+    b.addEventListener('click', ()=> openModal('note', state.notes.find(n=>String(n.id)===String(b.dataset.editNote))));
   });
   document.querySelectorAll('[data-del-note]').forEach(b=>{
     b.addEventListener('click', async ()=>{
@@ -856,7 +776,7 @@ function renderEnlaces(){
 }
 function bindEnlaces(){
   document.querySelectorAll('[data-edit-link]').forEach(b=>{
-    b.addEventListener('click', ()=> openModal('link', state.links.find(l=>l.id===b.dataset.editLink)));
+    b.addEventListener('click', ()=> openModal('link', state.links.find(l=>String(l.id)===String(b.dataset.editLink))));
   });
   document.querySelectorAll('[data-del-link]').forEach(b=>{
     b.addEventListener('click', async ()=>{
@@ -868,7 +788,7 @@ function bindEnlaces(){
 }
 
 /* =========================================================
-   MODALES (crear / editar)
+   MODALES (CREAR / EDITAR)
 ========================================================= */
 function openModal(type, data){
   state.modal = {type, data: data || null};
@@ -880,11 +800,11 @@ function closeModal(){
 }
 function driverOptions(selected){
   return `<option value="">— Sin asignar —</option>` + state.drivers.map(d=>
-    `<option value="${d.id}" ${selected===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
+    `<option value="${d.id}" ${String(selected)===String(d.id)?'selected':''}>${esc(d.name)}</option>`).join('');
 }
 function tripOptions(selected){
   return `<option value="">— Sin viaje —</option>` + state.trips.map(t=>
-    `<option value="${t.id}" ${selected===t.id?'selected':''}>${esc(t.origin)} &rarr; ${esc(t.destination)}</option>`).join('');
+    `<option value="${t.id}" ${String(selected)===String(t.id)?'selected':''}>${esc(t.origin)} &rarr; ${esc(t.destination)}</option>`).join('');
 }
 function toLocalInput(dt){
   if(!dt) return '';
@@ -1090,7 +1010,6 @@ async function saveModal(type, data){
    INICIO
 ========================================================= */
 (async function init(){
-  render();
   await loadAll();
 })();
 </script>
