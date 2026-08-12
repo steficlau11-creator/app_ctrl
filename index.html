@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RUTA//CTRL — Gestión de camioneros</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -260,6 +259,14 @@
 /* =========================================================
    ESTADO
 ========================================================= */
+// Credenciales por defecto de tu proyecto Supabase.
+// Se usan automáticamente si no hay ninguna configuración guardada.
+// Puedes cambiarlas en cualquier momento desde la pestaña "Configuración".
+const DEFAULT_SUPABASE_CONFIG = {
+  url: 'https://lirflipqomvxyrymocsi.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcmZsaXBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI3MTc4MzcsImV4cCI6MjA0ODI5NzgzN30.4KMEM0JZ3Jw3eM2n1TQtKRfKcB0eJnU1hJ2K5rX9L6Y',
+};
+
 const state = {
   config: null,          // {url, key}
   tab: 'inicio',
@@ -284,23 +291,15 @@ const TABS = [
 ];
 
 /* =========================================================
-   SUPABASE INIT — CREDENCIALES HARDCODED
-========================================================= */
-const SUPABASE_URL = 'https://lirflipqomvxyrymocsi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcmZsaXBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI3MTc4MzcsImV4cCI6MjA0ODI5NzgzN30.4KMEM0JZ3Jw3eM2n1TQtKRfKcB0eJnU1hJ2K5rX9L6Y';
-
-const { createClient } = window.supabase;
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Actualizar el state existente con las credenciales
-state.config = { url: SUPABASE_URL, key: SUPABASE_ANON_KEY };
-
-/* =========================================================
    PERSISTENCIA DE CONFIGURACIÓN (Claude storage, solo la config)
 ========================================================= */
 async function loadConfig(){
-  // Config ya está hardcoded arriba, no necesita cargar
-  return Promise.resolve();
+  try{
+    const r = await window.storage.get('supabase-config', false);
+    if(r && r.value){ state.config = JSON.parse(r.value); return; }
+  }catch(e){ /* no config guardada todavía */ }
+  // sin config guardada -> usar las credenciales por defecto
+  state.config = { ...DEFAULT_SUPABASE_CONFIG };
 }
 async function saveConfig(cfg){
   await window.storage.set('supabase-config', JSON.stringify(cfg), false);
