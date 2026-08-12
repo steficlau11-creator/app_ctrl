@@ -263,7 +263,7 @@
 // Se usan automáticamente si no hay ninguna configuración guardada.
 // Puedes cambiarlas en cualquier momento desde la pestaña "Configuración".
 const DEFAULT_SUPABASE_CONFIG = {
-  url: 'https://ilrfilpqomvxyrymocsi.supabase.co/rest/v1/',
+  url: 'https://lirflipqomvxyrymocsi.supabase.co',
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcmZsaXBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI3MTc4MzcsImV4cCI6MjA0ODI5NzgzN30.4KMEM0JZ3Jw3eM2n1TQtKRfKcB0eJnU1hJ2K5rX9L6Y',
 };
 
@@ -315,8 +315,14 @@ async function supaRequest(path, opts={}){
   const method = opts.method || 'GET';
   const headers = {
     'apikey': cfg.key,
-    'Authorization': 'Bearer ' + cfg.key,
   };
+  // Las claves "anon" clásicas son JWT (empiezan por "eyJ") y PostgREST
+  // necesita también recibirlas en Authorization: Bearer para resolver el rol.
+  // Las claves nuevas (sb_publishable_..., sb_secret_...) NO son JWT y NO
+  // deben mandarse en Authorization: Bearer, o Supabase responde 401.
+  if(cfg.key.startsWith('eyJ')){
+    headers['Authorization'] = 'Bearer ' + cfg.key;
+  }
   if(method !== 'GET' && method !== 'DELETE'){
     headers['Content-Type'] = 'application/json';
   }
