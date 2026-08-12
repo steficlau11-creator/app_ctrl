@@ -282,19 +282,20 @@ const TABS = [
   {id:'config', label:'Configuración', icon:'&#9881;'},
 ];
 
-/* =========================================================
-   PERSISTENCIA DE CONFIGURACIÓN (Claude storage, solo la config)
-========================================================= */
-async function loadConfig(){
-  try{
-    const r = await window.storage.get('supabase-config', false);
-    if(r && r.value){ state.config = JSON.parse(r.value); }
-  }catch(e){ /* no config yet */ }
-}
-async function saveConfig(cfg){
-  await window.storage.set('supabase-config', JSON.stringify(cfg), false);
-  state.config = cfg;
-}
+// ========== SUPABASE INIT ==========
+const SUPABASE_URL = 'https://lirflipqomvxyrymocsi.supabase.co/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscmZpbHBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODcyNzAsImV4cCI6MjEwMjA2MzI3MH0.P3Txrd--lohttgcJ8PPJsNuDWuo44OmY8YQRUK3RTq8'; 
+
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Estado global
+const state = {
+  config: {
+    url: SUPABASE_URL,
+    key: SUPABASE_ANON_KEY
+  }
+};
 
 /* =========================================================
    CLIENTE SUPABASE (REST / PostgREST)
