@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RUTA//CTRL — Gestión de camioneros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#171B1F;
+    --bg-elev:#20252B;
+    --bg-elev-2:#262C33;
+    --plate:#0F1215;
+    --yellow:#F2B705;
+    --yellow-dim:#C99A04;
+    --blue:#4E8FD1;
+    --red:#E15252;
+    --green:#4CAF7D;
+    --text:#F3F1EA;
+    --text-dim:#9AA1AB;
+    --text-faint:#6B7178;
+    --border:#31373F;
+    --font-display:'Barlow Condensed',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{background:var(--yellow);color:#1a1a1a;}
+  a{color:var(--blue);}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input,textarea,select{font-family:var(--font-body);}
+
+  /* ---------- layout ---------- */
+  #app{display:flex;min-height:100vh;}
+
+  .sidebar{
+    width:230px;flex:none;background:var(--plate);
+    border-right:1px solid var(--border);
+    display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;
+  }
+  .brand{
+    padding:22px 20px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .brand .mark{
+    font-family:var(--font-display);font-weight:800;font-size:26px;
+    letter-spacing:0.5px;color:var(--yellow);line-height:1;
+  }
+  .brand .mark span{color:var(--text);}
+  .brand .sub{font-size:11px;color:var(--text-faint);margin-top:4px;letter-spacing:1.5px;text-transform:uppercase;}
+
+  .navlist{list-style:none;margin:0;padding:14px 10px;flex:1;overflow-y:auto;}
+  .navlist li{margin-bottom:4px;}
+  .navbtn{
+    width:100%;display:flex;align-items:center;gap:10px;
+    background:transparent;border:none;color:var(--text-dim);
+    padding:11px 12px;border-radius:8px;font-size:14.5px;font-weight:600;
+    text-align:left;transition:background .15s,color .15s;
+  }
+  .navbtn:hover{background:var(--bg-elev);color:var(--text);}
+  .navbtn.active{background:var(--yellow);color:#1a1a1a;}
+  .navbtn .ic{font-size:16px;width:18px;text-align:center;}
+
+  .sidebar-foot{padding:14px;border-top:1px solid var(--border);}
+  .status-pill{
+    display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-faint);
+    padding:8px 10px;border-radius:8px;background:var(--bg-elev);
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);flex:none;}
+  .dot.ok{background:var(--green);}
+  .dot.off{background:var(--red);}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{
+    padding:24px 32px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+  .topbar h1{
+    font-family:var(--font-display);font-weight:700;font-size:32px;margin:0;letter-spacing:0.3px;
+  }
+  .topbar .subtitle{color:var(--text-dim);font-size:14px;margin-top:2px;}
+  .content{padding:20px 32px 60px;flex:1;}
+
+  /* road-dash divider (signature element) */
+  .road{
+    height:5px;border-radius:3px;margin:18px 0 22px;
+    background:repeating-linear-gradient(90deg, var(--yellow) 0 22px, transparent 22px 40px);
+    opacity:0.9;
+  }
+
+  .btn{
+    border:1px solid var(--border);background:var(--bg-elev);color:var(--text);
+    padding:9px 16px;border-radius:8px;font-size:14px;font-weight:600;
+    display:inline-flex;align-items:center;gap:7px;transition:border-color .15s, background .15s;
+  }
+  .btn:hover{border-color:var(--text-faint);}
+  .btn-primary{background:var(--yellow);color:#1a1a1a;border-color:var(--yellow);}
+  .btn-primary:hover{background:var(--yellow-dim);border-color:var(--yellow-dim);}
+  .btn-danger{color:var(--red);}
+  .btn-sm{padding:6px 11px;font-size:12.5px;}
+  .btn-icon{width:34px;height:34px;padding:0;justify-content:center;}
+
+  .grid{display:grid;gap:14px;}
+  .grid-cards{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));}
+
+  .card{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px;
+  }
+  .card-hover:hover{border-color:var(--text-faint);}
+
+  .driver-card{cursor:pointer;position:relative;}
+  .driver-card .avatar{
+    width:44px;height:44px;border-radius:50%;background:var(--bg-elev-2);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--yellow);
+    border:1px solid var(--border);margin-bottom:10px;
+  }
+  .driver-card h3{margin:0 0 2px;font-size:16px;font-weight:700;}
+  .driver-card p{margin:0;font-size:12.5px;color:var(--text-dim);}
+  .driver-card .meta{margin-top:10px;display:flex;gap:14px;}
+  .driver-card .meta div{font-family:var(--font-mono);font-size:13px;color:var(--yellow);}
+  .driver-card .meta span{display:block;font-family:var(--font-body);font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;}
+  .add-card{
+    border:1.5px dashed var(--border);background:transparent;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--text-dim);min-height:150px;font-weight:600;font-size:13.5px;gap:8px;
+  }
+  .add-card:hover{border-color:var(--yellow);color:var(--yellow);}
+  .add-card .plus{font-size:26px;line-height:1;}
+
+  .section-title{
+    font-family:var(--font-display);font-weight:700;font-size:20px;margin:26px 0 12px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .section-title .btn{font-size:13px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead th{
+    text-align:left;color:var(--text-faint);font-weight:600;font-size:11px;
+    text-transform:uppercase;letter-spacing:0.5px;padding:0 12px 8px;border-bottom:1px solid var(--border);
+  }
+  tbody td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tbody tr:hover{background:var(--bg-elev-2);}
+  .num{font-family:var(--font-mono);color:var(--yellow);}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end;}
+
+  .badge{
+    display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.4px;
+  }
+  .badge-plan{background:rgba(78,143,209,.15);color:var(--blue);}
+  .badge-curso{background:rgba(242,183,5,.15);color:var(--yellow);}
+  .badge-fin{background:rgba(76,175,125,.15);color:var(--green);}
+  .badge-descanso{background:rgba(78,143,209,.15);color:var(--blue);}
+  .badge-comida{background:rgba(242,183,5,.15);color:var(--yellow);}
+  .badge-pernocta{background:rgba(158,120,255,.15);color:#9E78FF;}
+
+  .empty{
+    padding:36px 20px;text-align:center;color:var(--text-faint);border:1px dashed var(--border);border-radius:var(--radius);
+    font-size:13.5px;
+  }
+
+  .note-item{
+    display:flex;gap:12px;padding:13px 14px;border:1px solid var(--border);border-radius:8px;
+    background:var(--bg-elev);margin-bottom:8px;align-items:flex-start;
+  }
+  .note-item.overdue{border-color:var(--red);}
+  .note-item .chk{margin-top:2px;flex:none;width:18px;height:18px;accent-color:var(--yellow);cursor:pointer;}
+  .note-item .body{flex:1;min-width:0;}
+  .note-item h4{margin:0 0 3px;font-size:14.5px;font-weight:600;}
+  .note-item.done h4{text-decoration:line-through;color:var(--text-faint);}
+  .note-item p{margin:0;font-size:12.5px;color:var(--text-dim);}
+  .note-item .when{font-family:var(--font-mono);font-size:11.5px;color:var(--yellow);margin-top:5px;}
+  .note-item.overdue .when{color:var(--red);}
+
+  .link-card{display:flex;flex-direction:column;gap:6px;}
+  .link-card a{font-weight:700;font-size:14.5px;text-decoration:none;word-break:break-word;}
+  .link-card a:hover{text-decoration:underline;}
+  .link-card .cat{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;}
+  .link-card .desc{font-size:12.5px;color:var(--text-dim);}
+
+  /* modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(10,12,14,.65);backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;
+  }
+  .modal{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;
+    width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:22px;
+  }
+  .modal h2{font-family:var(--font-display);font-size:22px;margin:0 0 16px;font-weight:700;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;}
+  .field input, .field textarea, .field select{
+    width:100%;background:var(--plate);border:1px solid var(--border);color:var(--text);
+    padding:10px 11px;border-radius:8px;font-size:14px;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{outline:none;border-color:var(--yellow);}
+  .field textarea{resize:vertical;min-height:64px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+
+  .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+  .toast{
+    background:var(--bg-elev-2);border:1px solid var(--border);border-left:4px solid var(--yellow);
+    padding:11px 16px;border-radius:8px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.35);
+    max-width:320px;
+  }
+  .toast.error{border-left-color:var(--red);}
+  .toast.success{border-left-color:var(--green);}
+
+  .config-box{max-width:520px;}
+  .config-box p{color:var(--text-dim);font-size:13.5px;line-height:1.6;}
+  .config-box code{background:var(--plate);padding:1px 6px;border-radius:4px;font-family:var(--font-mono);font-size:12.5px;}
+
+  .loading{color:var(--text-faint);font-size:13.5px;padding:20px 0;}
+
+  .stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+  .stat{
+    background:var(--plate);border:1px solid var(--border);border-radius:10px;
+    padding:12px 16px;min-width:120px;
+  }
+  .stat .v{font-family:var(--font-mono);font-size:22px;color:var(--yellow);font-weight:700;}
+  .stat .l{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+
+  select#driverFilter{max-width:220px;}
+
+  @media (max-width:820px){
+    #app{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:relative;flex-direction:row;align-items:center;overflow-x:auto;}
+    .brand{border-bottom:none;border-right:1px solid var(--border);white-space:nowrap;}
+    .navlist{display:flex;padding:10px;overflow-x:auto;}
+    .navlist li{margin-bottom:0;}
+    .navbtn{white-space:nowrap;}
+    .sidebar-foot{display:none;}
+    .topbar,.content{padding-left:16px;padding-right:16px;}
+    .field-row{grid-template-columns:1fr;}
+  }
+
+  :focus-visible{outline:2px solid var(--yellow);outline-offset:2px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* =========================================================
+   ESTADO
+========================================================= */
+const state = {
+  config: null,          // {url, key}
+  tab: 'inicio',
+  drivers: [],
+  trips: [],
+  rests: [],
+  notes: [],
+  links: [],
+  loading: {drivers:false, trips:false, rests:false, notes:false, links:false},
+  loaded: false,
+  modal: null,           // {type, data}
+};
+
+const TABS = [
+  {id:'inicio', label:'Inicio', icon:'&#9679;'},
+  {id:'camioneros', label:'Camioneros', icon:'&#128100;'},
+  {id:'viajes', label:'Viajes', icon:'&#128506;'},
+  {id:'descansos', label:'Descansos y Km', icon:'&#9201;'},
+  {id:'notas', label:'Notas y Recordatorios', icon:'&#128221;'},
+  {id:'enlaces', label:'Enlaces de interés', icon:'&#128279;'},
+  {id:'config', label:'Configuración', icon:'&#9881;'},
+];
+
+/* =========================================================
+   PERSISTENCIA DE CONFIGURACIÓN (Claude storage, solo la config)
+========================================================= */
+async function loadConfig(){
+  try{
+    const r = await window.storage.get('supabase-config', false);
+    if(r && r.value){ state.config = JSON.parse(r.value); }
+  }catch(e){ /* no config yet */ }
+}
+async function saveConfig(cfg){
+  await window.storage.set('supabase-config', JSON.stringify(cfg), false);
+  state.config = cfg;
+}
+
+/* =========================================================
+   CLIENTE SUPABASE (REST / PostgREST)
+========================================================= */
+async function supaRequest(path, opts={}){
+  const cfg = state.config;
+  if(!cfg || !cfg.url || !cfg.key) throw new Error('Configura primero tu URL y tu clave anon de Supabase en el apartado Configuración.');
+  const method = opts.method || 'GET';
+  const headers = {
+    'apikey': cfg.key,
+    'Authorization': 'Bearer ' + cfg.key,
+  };
+  if(method !== 'GET' && method !== 'DELETE'){
+    headers['Content-Type'] = 'application/json';
+  }
+  if(method !== 'GET'){
+    headers['Prefer'] = 'return=representation';
+  }
+  const url = cfg.url.replace(/\/$/,'') + '/rest/v1/' + path;
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if(!res.ok){
+    let msg = 'Error ' + res.status;
+    try{ const j = await res.json(); msg += ': ' + (j.message || JSON.stringify(j)); }catch(e){}
+    throw new Error(msg);
+  }
+  if(res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+const api = {
+  drivers: {
+    list: () => supaRequest('drivers?select=*&order=created_at.desc'),
+    create: (d) => supaRequest('drivers', {method:'POST', body:d}),
+    update: (id,d) => supaRequest('drivers?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('drivers?id=eq.'+id, {method:'DELETE'}),
+  },
+  trips: {
+    list: () => supaRequest('trips?select=*&order=created_at.desc'),
+    create: (d) => supaRequest('trips', {method:'POST', body:d}),
+    update: (id,d) => supaRequest('trips?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('trips?id=eq.'+id, {method:'DELETE'}),
+  },
+  rests: {
+    list: () => supaRequest('rests?select=*&order=start_time.desc'),
+    create: (d) => supaRequest('rests', {method:'POST', body:d}),
+    update: (id,d) => supaRequest('rests?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('rests?id=eq.'+id, {method:'DELETE'}),
+  },
+  notes: {
+    list: () => supaRequest('notes?select=*&order=reminder_at.asc.nullslast'),
+    create: (d) => supaRequest('notes', {method:'POST', body:d}),
+    update: (id,d) => supaRequest('notes?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('notes?id=eq.'+id, {method:'DELETE'}),
+  },
+  links: {
+    list: () => supaRequest('links?select=*&order=created_at.desc'),
+    create: (d) => supaRequest('links', {method:'POST', body:d}),
+    update: (id,d) => supaRequest('links?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('links?id=eq.'+id, {method:'DELETE'}),
+  },
+};
+
+/* =========================================================
+   UTIL
+========================================================= */
+function esc(s){
+  if(s===null||s===undefined) return '';
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = new Date(d);
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+function fmtDateTime(d){
+  if(!d) return '—';
+  const dt = new Date(d);
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'}) + ' ' + dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+}
+function initials(name){
+  return (name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+function driverName(id){
+  const d = state.drivers.find(x=>x.id===id);
+  return d ? d.name : '—';
+}
+function toast(msg, kind){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind||'');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 4200);
+}
+function durationLabel(start,end){
+  if(!start || !end) return '—';
+  const ms = new Date(end) - new Date(start);
+  if(isNaN(ms) || ms<0) return '—';
+  const h = Math.floor(ms/3600000);
+  const m = Math.round((ms%3600000)/60000);
+  return h+'h '+m+'m';
+}
+
+/* =========================================================
+   CARGA DE DATOS
+========================================================= */
+async function loadAll(){
+  if(!state.config) return;
+  try{
+    const [drivers, trips, rests, notes, links] = await Promise.all([
+      api.drivers.list(), api.trips.list(), api.rests.list(), api.notes.list(), api.links.list()
+    ]);
+    state.drivers = drivers || [];
+    state.trips = trips || [];
+    state.rests = rests || [];
+    state.notes = notes || [];
+    state.links = links || [];
+    state.loaded = true;
+  }catch(e){
+    toast(e.message, 'error');
+  }
+  render();
+}
+
+/* =========================================================
+   RENDER: SHELL
+========================================================= */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="sidebar">
+      <div class="brand">
+        <div class="mark">RUTA<span>//</span>CTRL</div>
+        <div class="sub">Gestión de flota</div>
+      </div>
+      <ul class="navlist">
+        ${TABS.map(t => `
+          <li>
+            <button class="navbtn ${state.tab===t.id?'active':''}" data-tab="${t.id}">
+              <span class="ic">${t.icon}</span>${esc(t.label)}
+            </button>
+          </li>`).join('')}
+      </ul>
+      <div class="sidebar-foot">
+        <div class="status-pill">
+          <span class="dot ${state.config ? (state.loaded?'ok':'') : 'off'}"></span>
+          ${state.config ? (state.loaded ? 'Conectado a Supabase' : 'Conectando…') : 'Sin configurar'}
+        </div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>${esc(TABS.find(t=>t.id===state.tab).label)}</h1>
+          <div class="subtitle">${topbarSubtitle()}</div>
+        </div>
+        ${topbarAction()}
+      </div>
+      <div class="road"></div>
+      <div class="content" id="content">${renderContent()}</div>
+    </div>
+  `;
+  bindNav();
+  bindTabContent();
+  renderModal();
+}
+
+function topbarSubtitle(){
+  const map = {
+    inicio:'Notas destacadas y perfiles de camioneros',
+    camioneros:'Alta y gestión de conductores',
+    viajes:'Rutas, fechas y kilometraje por viaje',
+    descansos:'Registro de descansos y kilómetros recorridos',
+    notas:'Notas libres y recordatorios',
+    enlaces:'Accesos guardados',
+    config:'Conexión con tu proyecto Supabase',
+  };
+  return map[state.tab] || '';
+}
+
+function topbarAction(){
+  if(!state.config && state.tab!=='config') return '';
+  const map = {
+    inicio: `<button class="btn btn-primary" data-action="new-driver">+ Nuevo camionero</button>`,
+    camioneros: `<button class="btn btn-primary" data-action="new-driver">+ Nuevo camionero</button>`,
+    viajes: `<button class="btn btn-primary" data-action="new-trip">+ Nuevo viaje</button>`,
+    descansos: `<button class="btn btn-primary" data-action="new-rest">+ Nuevo descanso</button>`,
+    notas: `<button class="btn btn-primary" data-action="new-note">+ Nueva nota</button>`,
+    enlaces: `<button class="btn btn-primary" data-action="new-link">+ Nuevo enlace</button>`,
+    config: '',
+  };
+  return map[state.tab] || '';
+}
+
+function bindNav(){
+  document.querySelectorAll('.navbtn').forEach(b=>{
+    b.addEventListener('click', ()=>{ state.tab = b.dataset.tab; render(); });
+  });
+  const topAction = document.querySelector('.topbar [data-action]');
+  if(topAction){
+    topAction.addEventListener('click', ()=>{
+      const a = topAction.dataset.action;
+      if(a==='new-driver') openModal('driver', null);
+      if(a==='new-trip') openModal('trip', null);
+      if(a==='new-rest') openModal('rest', null);
+      if(a==='new-note') openModal('note', null);
+      if(a==='new-link') openModal('link', null);
+    });
+  }
+}
+
+/* =========================================================
+   RENDER: CONTENIDO POR PESTAÑA
+========================================================= */
+function renderContent(){
+  if(state.tab === 'config') return renderConfig();
+  if(!state.config){
+    return `<div class="empty">Todavía no has conectado tu proyecto de Supabase.<br><br>
+      <button class="btn btn-primary" data-action="go-config">Ir a Configuración</button></div>`;
+  }
+  if(!state.loaded) return `<div class="loading">Cargando datos desde Supabase…</div>`;
+
+  if(state.tab === 'inicio') return renderInicio();
+  if(state.tab === 'camioneros') return renderCamioneros();
+  if(state.tab === 'viajes') return renderViajes();
+  if(state.tab === 'descansos') return renderDescansos();
+  if(state.tab === 'notas') return renderNotas();
+  if(state.tab === 'enlaces') return renderEnlaces();
+  return '';
+}
+
+function bindTabContent(){
+  const goCfg = document.querySelector('[data-action="go-config"]');
+  if(goCfg) goCfg.addEventListener('click', ()=>{ state.tab='config'; render(); });
+
+  if(state.tab === 'config') bindConfigForm();
+  if(state.tab === 'inicio') bindInicio();
+  if(state.tab === 'camioneros') bindCamioneros();
+  if(state.tab === 'viajes') bindViajes();
+  if(state.tab === 'descansos') bindDescansos();
+  if(state.tab === 'notas') bindNotas();
+  if(state.tab === 'enlaces') bindEnlaces();
+}
+
+/* ---------- CONFIGURACIÓN ---------- */
+function renderConfig(){
+  const cfg = state.config || {url:'', key:''};
+  return `
+    <div class="card config-box">
+      <p>Conecta tu proyecto de Supabase. Encuentras estos datos en tu proyecto → <b>Settings → API</b>:
+      la <code>Project URL</code> y la clave <code>anon public</code>.</p>
+      <p>Antes de conectar, recuerda ejecutar el script <code>schema.sql</code> que te he generado en el
+      SQL Editor de Supabase para crear las tablas.</p>
+      <div class="field">
+        <label>Project URL</label>
+        <input id="cfgUrl" type="text" placeholder="https://xxxxx.supabase.co" value="${esc(cfg.url)}">
+      </div>
+      <div class="field">
+        <label>Anon public key</label>
+        <textarea id="cfgKey" placeholder="eyJhbGciOi...">${esc(cfg.key)}</textarea>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="btn btn-primary" id="cfgSave">Guardar y conectar</button>
+        <button class="btn" id="cfgTest">Probar conexión</button>
+      </div>
+    </div>
+  `;
+}
+function bindConfigForm(){
+  document.getElementById('cfgSave').addEventListener('click', async ()=>{
+    const url = document.getElementById('cfgUrl').value.trim();
+    const key = document.getElementById('cfgKey').value.trim();
+    if(!url || !key){ toast('Introduce URL y clave.', 'error'); return; }
+    await saveConfig({url,key});
+    toast('Configuración guardada.', 'success');
+    state.loaded = false;
+    render();
+    await loadAll();
+  });
+  document.getElementById('cfgTest').addEventListener('click', async ()=>{
+    const url = document.getElementById('cfgUrl').value.trim();
+    const key = document.getElementById('cfgKey').value.trim();
+    if(!url || !key){ toast('Introduce URL y clave.', 'error'); return; }
+    const prevCfg = state.config;
+    state.config = {url,key};
+    try{
+      await supaRequest('drivers?select=id&limit=1');
+      toast('Conexión correcta.', 'success');
+    }catch(e){
+      toast('Fallo de conexión: ' + e.message, 'error');
+    }
+    state.config = prevCfg;
+  });
+}
+
+/* ---------- INICIO ---------- */
+function renderInicio(){
+  const pending = state.notes.filter(n=>!n.done).sort((a,b)=>{
+    if(!a.reminder_at) return 1;
+    if(!b.reminder_at) return -1;
+    return new Date(a.reminder_at) - new Date(b.reminder_at);
+  }).slice(0,6);
+
+  return `
+    <div class="section-title">Notas destacadas</div>
+    ${pending.length ? pending.map(noteRowHtml).join('') : `<div class="empty">No hay notas pendientes. Crea una desde "Notas y Recordatorios".</div>`}
+
+    <div class="section-title">Camioneros<span></span></div>
+    <div class="grid grid-cards">
+      ${state.drivers.map(driverCardHtml).join('')}
+      <button class="card add-card" data-action="new-driver-inline">
+        <span class="plus">+</span> Nuevo camionero
+      </button>
+    </div>
+  `;
+}
+function driverCardHtml(d){
+  const kmTotal = state.trips.filter(t=>t.driver_id===d.id)
+    .reduce((sum,t)=> sum + (Number(t.km_end||0) - Number(t.km_start||0) > 0 ? (Number(t.km_end||0)-Number(t.km_start||0)) : 0), 0);
+  const restCount = state.rests.filter(r=>r.driver_id===d.id).length;
+  return `
+    <div class="card driver-card card-hover" data-driver="${d.id}">
+      <div class="avatar">${esc(initials(d.name))}</div>
+      <h3>${esc(d.name)}</h3>
+      <p>${esc(d.license_number||'Sin nº de carnet')}</p>
+      <div class="meta">
+        <div>${kmTotal.toLocaleString('es-ES')}<span>Km totales</span></div>
+        <div>${restCount}<span>Descansos</span></div>
+      </div>
+    </div>
+  `;
+}
+function noteRowHtml(n){
+  const overdue = n.reminder_at && !n.done && new Date(n.reminder_at) < new Date();
+  return `
+    <div class="note-item ${n.done?'done':''} ${overdue?'overdue':''}" data-note="${n.id}">
+      <input type="checkbox" class="chk" data-note-toggle="${n.id}" ${n.done?'checked':''}>
+      <div class="body">
+        <h4>${esc(n.title)}</h4>
+        ${n.content ? `<p>${esc(n.content)}</p>` : ''}
+        ${n.reminder_at ? `<div class="when">${fmtDateTime(n.reminder_at)}${n.driver_id?' · '+esc(driverName(n.driver_id)):''}</div>` : (n.driver_id?`<div class="when">${esc(driverName(n.driver_id))}</div>`:'')}
+      </div>
+    </div>
+  `;
+}
+function bindInicio(){
+  document.querySelectorAll('[data-driver]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.tab='camioneros'; render(); });
+  });
+  const newBtn = document.querySelector('[data-action="new-driver-inline"]');
+  if(newBtn) newBtn.addEventListener('click', ()=> openModal('driver', null));
+  bindNoteToggles();
+}
+
+/* ---------- CAMIONEROS ---------- */
+function renderCamioneros(){
+  if(!state.drivers.length) return `<div class="empty">Todavía no hay camioneros. Usa "+ Nuevo camionero" para crear el primero.</div>`;
+  return `
+    <div class="grid grid-cards">
+      ${state.drivers.map(d => `
+        <div class="card driver-card card-hover">
+          <div class="avatar">${esc(initials(d.name))}</div>
+          <h3>${esc(d.name)}</h3>
+          <p>${esc(d.phone||'')}${d.phone && d.license_number ? ' · ':''}${esc(d.license_number||'')}</p>
+          ${d.notes ? `<p style="margin-top:6px;">${esc(d.notes)}</p>` : ''}
+          <div class="modal-actions" style="margin-top:12px;">
+            <button class="btn btn-sm" data-edit-driver="${d.id}">Editar</button>
+            <button class="btn btn-sm btn-danger" data-del-driver="${d.id}">Eliminar</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function bindCamioneros(){
+  document.querySelectorAll('[data-edit-driver]').forEach(b=>{
+    b.addEventListener('click', ()=> openModal('driver', state.drivers.find(d=>d.id===b.dataset.editDriver)));
+  });
+  document.querySelectorAll('[data-del-driver]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este camionero? Sus viajes y descansos quedarán sin asignar.')) return;
+      try{ await api.drivers.remove(b.dataset.delDriver); toast('Camionero eliminado.', 'success'); await loadAll(); }
+      catch(e){ toast(e.message, 'error'); }
+    });
+  });
+}
+
+/* ---------- VIAJES ---------- */
+function renderViajes(){
+  const rows = state.trips;
+  return `
+    <div class="field" style="max-width:260px;">
+      <label>Filtrar por camionero</label>
+      <select id="driverFilterTrips">
+        <option value="">Todos</option>
+        ${state.drivers.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}
+      </select>
+    </div>
+    ${rows.length ? `
+    <table>
+      <thead><tr>
+        <th>Camionero</th><th>Origen → Destino</th><th>Fechas</th><th>Km</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody id="tripsBody">
+        ${rows.map(tripRowHtml).join('')}
+      </tbody>
+    </table>` : `<div class="empty">Sin viajes todavía. Crea uno con "+ Nuevo viaje".</div>`}
+  `;
+}
+function tripRowHtml(t){
+  const km = (Number(t.km_end||0) - Number(t.km_start||0));
+  const badgeClass = t.status==='en_curso' ? 'badge-curso' : (t.status==='finalizado' ? 'badge-fin' : 'badge-plan');
+  const label = t.status==='en_curso' ? 'En curso' : (t.status==='finalizado' ? 'Finalizado' : 'Planificado');
+  return `
+    <tr data-driver-row="${t.driver_id||''}">
+      <td>${esc(driverName(t.driver_id))}</td>
+      <td>${esc(t.origin)} &rarr; ${esc(t.destination)}</td>
+      <td>${fmtDate(t.start_date)} — ${fmtDate(t.end_date)}</td>
+      <td class="num">${km>0 ? km.toLocaleString('es-ES')+' km' : '—'}</td>
+      <td><span class="badge ${badgeClass}">${label}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-sm" data-edit-trip="${t.id}">Editar</button>
+          <button class="btn btn-sm btn-danger" data-del-trip="${t.id}">Eliminar</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+function bindViajes(){
+  const filter = document.getElementById('driverFilterTrips');
+  if(filter) filter.addEventListener('change', ()=>{
+    const v = filter.value;
+    document.querySelectorAll('[data-driver-row]').forEach(row=>{
+      row.style.display = (!v || row.dataset.driverRow===v) ? '' : 'none';
+    });
+  });
+  document.querySelectorAll('[data-edit-trip]').forEach(b=>{
+    b.addEventListener('click', ()=> openModal('trip', state.trips.find(t=>t.id===b.dataset.editTrip)));
+  });
+  document.querySelectorAll('[data-del-trip]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este viaje?')) return;
+      try{ await api.trips.remove(b.dataset.delTrip); toast('Viaje eliminado.', 'success'); await loadAll(); }
+      catch(e){ toast(e.message, 'error'); }
+    });
+  });
+}
+
+/* ---------- DESCANSOS Y KM ---------- */
+function renderDescansos(){
+  const totalKm = state.trips.reduce((s,t)=>{
+    const k = Number(t.km_end||0) - Number(t.km_start||0);
+    return s + (k>0?k:0);
+  },0);
+  const totalRests = state.rests.length;
+  const rows = state.rests;
+  return `
+    <div class="stat-row">
+      <div class="stat"><div class="v">${totalKm.toLocaleString('es-ES')}</div><div class="l">Km totales flota</div></div>
+      <div class="stat"><div class="v">${totalRests}</div><div class="l">Descansos registrados</div></div>
+    </div>
+    ${rows.length ? `
+    <table>
+      <thead><tr>
+        <th>Camionero</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Km</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(restRowHtml).join('')}
+      </tbody>
+    </table>` : `<div class="empty">Sin descansos registrados. Crea uno con "+ Nuevo descanso".</div>`}
+  `;
+}
+function restRowHtml(r){
+  const badgeClass = r.rest_type==='comida' ? 'badge-comida' : (r.rest_type==='pernocta' ? 'badge-pernocta' : 'badge-descanso');
+  const label = r.rest_type==='comida' ? 'Comida' : (r.rest_type==='pernocta' ? 'Pernocta' : 'Descanso');
+  return `
+    <tr>
+      <td>${esc(driverName(r.driver_id))}</td>
+      <td><span class="badge ${badgeClass}">${label}</span></td>
+      <td>${fmtDateTime(r.start_time)}</td>
+      <td>${fmtDateTime(r.end_time)}</td>
+      <td class="num">${durationLabel(r.start_time, r.end_time)}</td>
+      <td class="num">${r.km_at_rest ? Number(r.km_at_rest).toLocaleString('es-ES')+' km' : '—'}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-sm" data-edit-rest="${r.id}">Editar</button>
+          <button class="btn btn-sm btn-danger" data-del-rest="${r.id}">Eliminar</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+function bindDescansos(){
+  document.querySelectorAll('[data-edit-rest]').forEach(b=>{
+    b.addEventListener('click', ()=> openModal('rest', state.rests.find(r=>r.id===b.dataset.editRest)));
+  });
+  document.querySelectorAll('[data-del-rest]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este descanso?')) return;
+      try{ await api.rests.remove(b.dataset.delRest); toast('Descanso eliminado.', 'success'); await loadAll(); }
+      catch(e){ toast(e.message, 'error'); }
+    });
+  });
+}
+
+/* ---------- NOTAS Y RECORDATORIOS ---------- */
+function renderNotas(){
+  if(!state.notes.length) return `<div class="empty">Sin notas todavía. Crea una con "+ Nueva nota".</div>`;
+  const sorted = [...state.notes].sort((a,b)=>{
+    if(a.done !== b.done) return a.done ? 1 : -1;
+    if(!a.reminder_at) return 1;
+    if(!b.reminder_at) return -1;
+    return new Date(a.reminder_at) - new Date(b.reminder_at);
+  });
+  return sorted.map(n => `
+    <div class="note-item ${n.done?'done':''} ${n.reminder_at && !n.done && new Date(n.reminder_at)<new Date() ? 'overdue':''}">
+      <input type="checkbox" class="chk" data-note-toggle="${n.id}" ${n.done?'checked':''}>
+      <div class="body">
+        <h4>${esc(n.title)}</h4>
+        ${n.content ? `<p>${esc(n.content)}</p>` : ''}
+        <div class="when">${n.reminder_at ? fmtDateTime(n.reminder_at) : 'Sin recordatorio'}${n.driver_id?' · '+esc(driverName(n.driver_id)):''}</div>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-sm" data-edit-note="${n.id}">Editar</button>
+        <button class="btn btn-sm btn-danger" data-del-note="${n.id}">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+}
+function bindNotas(){
+  bindNoteToggles();
+  document.querySelectorAll('[data-edit-note]').forEach(b=>{
+    b.addEventListener('click', ()=> openModal('note', state.notes.find(n=>n.id===b.dataset.editNote)));
+  });
+  document.querySelectorAll('[data-del-note]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar esta nota?')) return;
+      try{ await api.notes.remove(b.dataset.delNote); toast('Nota eliminada.', 'success'); await loadAll(); }
+      catch(e){ toast(e.message, 'error'); }
+    });
+  });
+}
+function bindNoteToggles(){
+  document.querySelectorAll('[data-note-toggle]').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      try{ await api.notes.update(cb.dataset.noteToggle, {done: cb.checked}); await loadAll(); }
+      catch(e){ toast(e.message, 'error'); }
+    });
+  });
+}
+
+/* ---------- ENLACES DE INTERÉS ---------- */
+function renderEnlaces(){
+  if(!state.links.length) return `<div class="empty">Sin enlaces guardados. Crea uno con "+ Nuevo enlace".</div>`;
+  return `
+    <div class="grid grid-cards">
+      ${state.links.map(l => `
+        <div class="card link-card">
+          ${l.category ? `<span class="cat">${esc(l.category)}</span>` : ''}
+          <a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}</a>
+          ${l.notes ? `<span class="desc">${esc(l.notes)}</span>` : ''}
+          <div class="modal-actions" style="margin-top:6px;">
+            <button class="btn btn-sm" data-edit-link="${l.id}">Editar</button>
+            <button class="btn btn-sm btn-danger" data-del-link="${l.id}">Eliminar</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function bindEnlaces(){
+  document.querySelectorAll('[data-edit-link]').forEach(b=>{
+    b.addEventListener('click', ()=> openModal('link', state.links.find(l=>l.id===b.dataset.editLink)));
+  });
+  document.querySelectorAll('[data-del-link]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este enlace?')) return;
+      try{ await api.links.remove(b.dataset.delLink); toast('Enlace eliminado.', 'success'); await loadAll(); }
+      catch(e){ toast(e.message, 'error'); }
+    });
+  });
+}
+
+/* =========================================================
+   MODALES (crear / editar)
+========================================================= */
+function openModal(type, data){
+  state.modal = {type, data: data || null};
+  renderModal();
+}
+function closeModal(){
+  state.modal = null;
+  renderModal();
+}
+function driverOptions(selected){
+  return `<option value="">— Sin asignar —</option>` + state.drivers.map(d=>
+    `<option value="${d.id}" ${selected===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
+}
+function tripOptions(selected){
+  return `<option value="">— Sin viaje —</option>` + state.trips.map(t=>
+    `<option value="${t.id}" ${selected===t.id?'selected':''}>${esc(t.origin)} &rarr; ${esc(t.destination)}</option>`).join('');
+}
+function toLocalInput(dt){
+  if(!dt) return '';
+  const d = new Date(dt);
+  if(isNaN(d)) return '';
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function renderModal(){
+  let host = document.getElementById('modalHost');
+  if(!state.modal){ if(host) host.remove(); return; }
+  if(!host){ host = document.createElement('div'); host.id='modalHost'; document.body.appendChild(host); }
+
+  const {type, data} = state.modal;
+  const isEdit = !!(data && data.id);
+  let inner = '';
+
+  if(type === 'driver'){
+    inner = `
+      <h2>${isEdit?'Editar':'Nuevo'} camionero</h2>
+      <div class="field"><label>Nombre</label><input id="f_name" value="${esc(data?.name)}"></div>
+      <div class="field-row">
+        <div class="field"><label>Teléfono</label><input id="f_phone" value="${esc(data?.phone)}"></div>
+        <div class="field"><label>Nº de carnet</label><input id="f_license" value="${esc(data?.license_number)}"></div>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
+    `;
+  }
+  if(type === 'trip'){
+    inner = `
+      <h2>${isEdit?'Editar':'Nuevo'} viaje</h2>
+      <div class="field"><label>Camionero</label><select id="f_driver">${driverOptions(data?.driver_id)}</select></div>
+      <div class="field-row">
+        <div class="field"><label>Origen</label><input id="f_origin" value="${esc(data?.origin)}"></div>
+        <div class="field"><label>Destino</label><input id="f_destination" value="${esc(data?.destination)}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Fecha inicio</label><input type="date" id="f_start_date" value="${data?.start_date||''}"></div>
+        <div class="field"><label>Fecha fin</label><input type="date" id="f_end_date" value="${data?.end_date||''}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Km inicial</label><input type="number" id="f_km_start" value="${data?.km_start ?? ''}"></div>
+        <div class="field"><label>Km final</label><input type="number" id="f_km_end" value="${data?.km_end ?? ''}"></div>
+      </div>
+      <div class="field"><label>Estado</label>
+        <select id="f_status">
+          <option value="planificado" ${data?.status==='planificado'||!data?'selected':''}>Planificado</option>
+          <option value="en_curso" ${data?.status==='en_curso'?'selected':''}>En curso</option>
+          <option value="finalizado" ${data?.status==='finalizado'?'selected':''}>Finalizado</option>
+        </select>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
+    `;
+  }
+  if(type === 'rest'){
+    inner = `
+      <h2>${isEdit?'Editar':'Nuevo'} descanso</h2>
+      <div class="field-row">
+        <div class="field"><label>Camionero</label><select id="f_driver">${driverOptions(data?.driver_id)}</select></div>
+        <div class="field"><label>Viaje asociado</label><select id="f_trip">${tripOptions(data?.trip_id)}</select></div>
+      </div>
+      <div class="field"><label>Tipo</label>
+        <select id="f_type">
+          <option value="descanso" ${!data||data?.rest_type==='descanso'?'selected':''}>Descanso</option>
+          <option value="comida" ${data?.rest_type==='comida'?'selected':''}>Comida</option>
+          <option value="pernocta" ${data?.rest_type==='pernocta'?'selected':''}>Pernocta</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Inicio</label><input type="datetime-local" id="f_start" value="${toLocalInput(data?.start_time)}"></div>
+        <div class="field"><label>Fin</label><input type="datetime-local" id="f_end" value="${toLocalInput(data?.end_time)}"></div>
+      </div>
+      <div class="field"><label>Km en el momento del descanso</label><input type="number" id="f_km" value="${data?.km_at_rest ?? ''}"></div>
+      <div class="field"><label>Notas</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
+    `;
+  }
+  if(type === 'note'){
+    inner = `
+      <h2>${isEdit?'Editar':'Nueva'} nota</h2>
+      <div class="field"><label>Título</label><input id="f_title" value="${esc(data?.title)}"></div>
+      <div class="field"><label>Contenido</label><textarea id="f_content">${esc(data?.content)}</textarea></div>
+      <div class="field-row">
+        <div class="field"><label>Recordatorio</label><input type="datetime-local" id="f_reminder" value="${toLocalInput(data?.reminder_at)}"></div>
+        <div class="field"><label>Camionero (opcional)</label><select id="f_driver">${driverOptions(data?.driver_id)}</select></div>
+      </div>
+    `;
+  }
+  if(type === 'link'){
+    inner = `
+      <h2>${isEdit?'Editar':'Nuevo'} enlace</h2>
+      <div class="field"><label>Título</label><input id="f_title" value="${esc(data?.title)}"></div>
+      <div class="field"><label>URL</label><input id="f_url" value="${esc(data?.url)}" placeholder="https://"></div>
+      <div class="field"><label>Categoría</label><input id="f_category" value="${esc(data?.category)}" placeholder="p.ej. Normativa, Peajes, App"></div>
+      <div class="field"><label>Notas</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
+    `;
+  }
+
+  host.innerHTML = `
+    <div class="overlay" id="overlay">
+      <div class="modal">
+        ${inner}
+        <div class="modal-actions">
+          ${isEdit ? `<button class="btn btn-danger" id="modalDelete">Eliminar</button>` : ''}
+          <button class="btn" id="modalCancel">Cancelar</button>
+          <button class="btn btn-primary" id="modalSave">Guardar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  document.getElementById('modalSave').addEventListener('click', ()=> saveModal(type, data));
+  if(isEdit){
+    document.getElementById('modalDelete').addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este registro?')) return;
+      try{
+        await api[type+'s'].remove(data.id);
+        toast('Eliminado.', 'success');
+        closeModal();
+        await loadAll();
+      }catch(e){ toast(e.message, 'error'); }
+    });
+  }
+}
+
+async function saveModal(type, data){
+  const isEdit = !!(data && data.id);
+  let payload = {};
+  try{
+    if(type === 'driver'){
+      const name = document.getElementById('f_name').value.trim();
+      if(!name){ toast('El nombre es obligatorio.', 'error'); return; }
+      payload = {
+        name,
+        phone: document.getElementById('f_phone').value.trim() || null,
+        license_number: document.getElementById('f_license').value.trim() || null,
+        notes: document.getElementById('f_notes').value.trim() || null,
+      };
+    }
+    if(type === 'trip'){
+      const origin = document.getElementById('f_origin').value.trim();
+      const destination = document.getElementById('f_destination').value.trim();
+      if(!origin || !destination){ toast('Origen y destino son obligatorios.', 'error'); return; }
+      payload = {
+        driver_id: document.getElementById('f_driver').value || null,
+        origin, destination,
+        start_date: document.getElementById('f_start_date').value || null,
+        end_date: document.getElementById('f_end_date').value || null,
+        km_start: document.getElementById('f_km_start').value ? Number(document.getElementById('f_km_start').value) : null,
+        km_end: document.getElementById('f_km_end').value ? Number(document.getElementById('f_km_end').value) : null,
+        status: document.getElementById('f_status').value,
+        notes: document.getElementById('f_notes').value.trim() || null,
+      };
+    }
+    if(type === 'rest'){
+      const start = document.getElementById('f_start').value;
+      if(!start){ toast('La hora de inicio es obligatoria.', 'error'); return; }
+      payload = {
+        driver_id: document.getElementById('f_driver').value || null,
+        trip_id: document.getElementById('f_trip').value || null,
+        rest_type: document.getElementById('f_type').value,
+        start_time: new Date(start).toISOString(),
+        end_time: document.getElementById('f_end').value ? new Date(document.getElementById('f_end').value).toISOString() : null,
+        km_at_rest: document.getElementById('f_km').value ? Number(document.getElementById('f_km').value) : null,
+        notes: document.getElementById('f_notes').value.trim() || null,
+      };
+    }
+    if(type === 'note'){
+      const title = document.getElementById('f_title').value.trim();
+      if(!title){ toast('El título es obligatorio.', 'error'); return; }
+      payload = {
+        title,
+        content: document.getElementById('f_content').value.trim() || null,
+        reminder_at: document.getElementById('f_reminder').value ? new Date(document.getElementById('f_reminder').value).toISOString() : null,
+        driver_id: document.getElementById('f_driver').value || null,
+      };
+    }
+    if(type === 'link'){
+      const title = document.getElementById('f_title').value.trim();
+      const url = document.getElementById('f_url').value.trim();
+      if(!title || !url){ toast('Título y URL son obligatorios.', 'error'); return; }
+      payload = {
+        title, url,
+        category: document.getElementById('f_category').value.trim() || null,
+        notes: document.getElementById('f_notes').value.trim() || null,
+      };
+    }
+
+    if(isEdit) await api[type+'s'].update(data.id, payload);
+    else await api[type+'s'].create(payload);
+
+    toast(isEdit ? 'Cambios guardados.' : 'Creado correctamente.', 'success');
+    closeModal();
+    await loadAll();
+  }catch(e){
+    toast(e.message, 'error');
+  }
+}
+
+/* =========================================================
+   INICIO
+========================================================= */
+(async function init(){
+  await loadConfig();
+  render();
+  if(state.config) await loadAll();
+})();
+</script>
+</body>
+</html>
