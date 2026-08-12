@@ -260,15 +260,14 @@
    ESTADO
 ========================================================= */
 const state = {
-  config: null,          // {url, key}
   tab: 'inicio',
   drivers: [],
   trips: [],
   rests: [],
   notes: [],
   links: [],
-  loading: {drivers:false, trips:false, rests:false, notes:false, links:false},
   loaded: false,
+  connectionError: null,
   modal: null,           // {type, data}
 };
 
@@ -279,46 +278,26 @@ const TABS = [
   {id:'descansos', label:'Descansos y Km', icon:'&#9201;'},
   {id:'notas', label:'Notas y Recordatorios', icon:'&#128221;'},
   {id:'enlaces', label:'Enlaces de interés', icon:'&#128279;'},
-  {id:'config', label:'Configuración', icon:'&#9881;'},
 ];
-
 /* =========================================================
-   PERSISTENCIA DE CONFIGURACIÓN (Claude storage, solo la config)
-========================================================= */
-async function loadConfig(){
-  try{
-    const r = await window.storage.get('supabase-config', false);
-    if(r && r.value){ state.config = JSON.parse(r.value); }
-  }catch(e){ /* no config yet */ }
-}
-async function saveConfig(cfg){
-  await window.storage.set('supabase-config', JSON.stringify(cfg), false);
-  state.config = cfg;
-}
-
-/* =========================================================
-   CLIENTE SUPABASE (REST / PostgREST)
+   CLIENTE SUPABASE (REST / PostgREST) — vía servidor local
 ========================================================= */
 async function supaRequest(path, opts={}){
-  const cfg = state.config;
-  if(!cfg || !cfg.url || !cfg.key) throw new Error('Configura primero tu URL y tu clave anon de Supabase en el apartado Configuración.');
   const method = opts.method || 'GET';
-  const headers = {
-    'apikey': cfg.key,
-    'Authorization': 'Bearer ' + cfg.key,
-  };
+  const headers = {};
   if(method !== 'GET' && method !== 'DELETE'){
     headers['Content-Type'] = 'application/json';
   }
-  if(method !== 'GET'){
-    headers['Prefer'] = 'return=representation';
+  let res;
+  try{
+    res = await fetch('/api/' + path, {
+      method,
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  }catch(networkErr){
+    throw new Error('No se pudo contactar con el servidor local. ¿Sigue corriendo "node server.js" en la terminal?');
   }
-  const url = cfg.url.replace(/\/$/,'') + '/rest/v1/' + path;
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
   if(!res.ok){
     let msg = 'Error ' + res.status;
     try{ const j = await res.json(); msg += ': ' + (j.message || JSON.stringify(j)); }catch(e){}
@@ -409,7 +388,6 @@ function durationLabel(start,end){
    CARGA DE DATOS
 ========================================================= */
 async function loadAll(){
-  if(!state.config) return;
   try{
     const [drivers, trips, rests, notes, links] = await Promise.all([
       api.drivers.list(), api.trips.list(), api.rests.list(), api.notes.list(), api.links.list()
@@ -420,7 +398,9 @@ async function loadAll(){
     state.notes = notes || [];
     state.links = links || [];
     state.loaded = true;
+    state.connectionError = null;
   }catch(e){
+    state.connectionError = e.message;
     toast(e.message, 'error');
   }
   render();
@@ -447,8 +427,8 @@ function render(){
       </ul>
       <div class="sidebar-foot">
         <div class="status-pill">
-          <span class="dot ${state.config ? (state.loaded?'ok':'') : 'off'}"></span>
-          ${state.config ? (state.loaded ? 'Conectado a Supabase' : 'Conectando…') : 'Sin configurar'}
+          <span class="dot ${state.connectionError ? 'off' : (state.loaded?'ok':'')}"></span>
+          ${state.connectionError ? 'Sin conexión con el servidor' : (state.loaded ? 'Conectado' : 'Conectando…')}
         </div>
       </div>
     </div>
@@ -477,13 +457,11 @@ function topbarSubtitle(){
     descansos:'Registro de descansos y kilómetros recorridos',
     notas:'Notas libres y recordatorios',
     enlaces:'Accesos guardados',
-    config:'Conexión con tu proyecto Supabase',
   };
   return map[state.tab] || '';
 }
 
 function topbarAction(){
-  if(!state.config && state.tab!=='config') return '';
   const map = {
     inicio: `<button class="btn btn-primary" data-action="new-driver">+ Nuevo camionero</button>`,
     camioneros: `<button class="btn btn-primary" data-action="new-driver">+ Nuevo camionero</button>`,
@@ -491,7 +469,6 @@ function topbarAction(){
     descansos: `<button class="btn btn-primary" data-action="new-rest">+ Nuevo descanso</button>`,
     notas: `<button class="btn btn-primary" data-action="new-note">+ Nueva nota</button>`,
     enlaces: `<button class="btn btn-primary" data-action="new-link">+ Nuevo enlace</button>`,
-    config: '',
   };
   return map[state.tab] || '';
 }
@@ -517,12 +494,13 @@ function bindNav(){
    RENDER: CONTENIDO POR PESTAÑA
 ========================================================= */
 function renderContent(){
-  if(state.tab === 'config') return renderConfig();
-  if(!state.config){
-    return `<div class="empty">Todavía no has conectado tu proyecto de Supabase.<br><br>
-      <button class="btn btn-primary" data-action="go-config">Ir a Configuración</button></div>`;
+  if(state.connectionError){
+    return `<div class="empty">No se pudo conectar con el servidor local.<br><br>
+      <span style="color:var(--red);font-family:var(--font-mono);font-size:12.5px;">${esc(state.connectionError)}</span><br><br>
+      Comprueba que sigues teniendo "node server.js" corriendo en la terminal, y pulsa
+      <button class="btn btn-sm" data-action="retry-load">Reintentar</button></div>`;
   }
-  if(!state.loaded) return `<div class="loading">Cargando datos desde Supabase…</div>`;
+  if(!state.loaded) return `<div class="loading">Cargando datos…</div>`;
 
   if(state.tab === 'inicio') return renderInicio();
   if(state.tab === 'camioneros') return renderCamioneros();
@@ -534,67 +512,15 @@ function renderContent(){
 }
 
 function bindTabContent(){
-  const goCfg = document.querySelector('[data-action="go-config"]');
-  if(goCfg) goCfg.addEventListener('click', ()=>{ state.tab='config'; render(); });
+  const retry = document.querySelector('[data-action="retry-load"]');
+  if(retry) retry.addEventListener('click', ()=> loadAll());
 
-  if(state.tab === 'config') bindConfigForm();
   if(state.tab === 'inicio') bindInicio();
   if(state.tab === 'camioneros') bindCamioneros();
   if(state.tab === 'viajes') bindViajes();
   if(state.tab === 'descansos') bindDescansos();
   if(state.tab === 'notas') bindNotas();
   if(state.tab === 'enlaces') bindEnlaces();
-}
-
-/* ---------- CONFIGURACIÓN ---------- */
-function renderConfig(){
-  const cfg = state.config || {url:'', key:''};
-  return `
-    <div class="card config-box">
-      <p>Conecta tu proyecto de Supabase. Encuentras estos datos en tu proyecto → <b>Settings → API</b>:
-      la <code>Project URL</code> y la clave <code>anon public</code>.</p>
-      <p>Antes de conectar, recuerda ejecutar el script <code>schema.sql</code> que te he generado en el
-      SQL Editor de Supabase para crear las tablas.</p>
-      <div class="field">
-        <label>Project URL</label>
-        <input id="cfgUrl" type="text" placeholder="https://xxxxx.supabase.co" value="${esc(cfg.url)}">
-      </div>
-      <div class="field">
-        <label>Anon public key</label>
-        <textarea id="cfgKey" placeholder="eyJhbGciOi...">${esc(cfg.key)}</textarea>
-      </div>
-      <div class="modal-actions" style="justify-content:flex-start;">
-        <button class="btn btn-primary" id="cfgSave">Guardar y conectar</button>
-        <button class="btn" id="cfgTest">Probar conexión</button>
-      </div>
-    </div>
-  `;
-}
-function bindConfigForm(){
-  document.getElementById('cfgSave').addEventListener('click', async ()=>{
-    const url = document.getElementById('cfgUrl').value.trim();
-    const key = document.getElementById('cfgKey').value.trim();
-    if(!url || !key){ toast('Introduce URL y clave.', 'error'); return; }
-    await saveConfig({url,key});
-    toast('Configuración guardada.', 'success');
-    state.loaded = false;
-    render();
-    await loadAll();
-  });
-  document.getElementById('cfgTest').addEventListener('click', async ()=>{
-    const url = document.getElementById('cfgUrl').value.trim();
-    const key = document.getElementById('cfgKey').value.trim();
-    if(!url || !key){ toast('Introduce URL y clave.', 'error'); return; }
-    const prevCfg = state.config;
-    state.config = {url,key};
-    try{
-      await supaRequest('drivers?select=id&limit=1');
-      toast('Conexión correcta.', 'success');
-    }catch(e){
-      toast('Fallo de conexión: ' + e.message, 'error');
-    }
-    state.config = prevCfg;
-  });
 }
 
 /* ---------- INICIO ---------- */
@@ -1109,9 +1035,8 @@ async function saveModal(type, data){
    INICIO
 ========================================================= */
 (async function init(){
-  await loadConfig();
   render();
-  if(state.config) await loadAll();
+  await loadAll();
 })();
 </script>
 </body>
