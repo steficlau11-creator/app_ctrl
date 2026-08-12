@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RUTA//CTRL — Gestión de camioneros</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -282,20 +283,29 @@ const TABS = [
   {id:'config', label:'Configuración', icon:'&#9881;'},
 ];
 
-// ========== SUPABASE INIT ==========
-const SUPABASE_URL = 'https://lirflipqomvxyrymocsi.supabase.co/';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscmZpbHBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODcyNzAsImV4cCI6MjEwMjA2MzI3MH0.P3Txrd--lohttgcJ8PPJsNuDWuo44OmY8YQRUK3RTq8'; 
+/* =========================================================
+   SUPABASE INIT — CREDENCIALES HARDCODED
+========================================================= */
+const SUPABASE_URL = 'https://lirflipqomvxyrymocsi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscmZpbHBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODcyNzAsImV4cCI6MjEwMjA2MzI3MH0.P3Txrd--lohttgcJ8PPJsNuDWuo44OmY8YQRUK3RTq8';
 
 const { createClient } = window.supabase;
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Estado global
-const state = {
-  config: {
-    url: SUPABASE_URL,
-    key: SUPABASE_ANON_KEY
-  }
-};
+// Actualizar el state existente con las credenciales
+state.config = { url: SUPABASE_URL, key: SUPABASE_ANON_KEY };
+
+/* =========================================================
+   PERSISTENCIA DE CONFIGURACIÓN (Claude storage, solo la config)
+========================================================= */
+async function loadConfig(){
+  // Config ya está hardcoded arriba, no necesita cargar
+  return Promise.resolve();
+}
+async function saveConfig(cfg){
+  await window.storage.set('supabase-config', JSON.stringify(cfg), false);
+  state.config = cfg;
+}
 
 /* =========================================================
    CLIENTE SUPABASE (REST / PostgREST)
