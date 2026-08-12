@@ -259,6 +259,14 @@
 /* =========================================================
    ESTADO
 ========================================================= */
+// Credenciales por defecto de tu proyecto Supabase.
+// Se usan automáticamente si no hay ninguna configuración guardada.
+// Puedes cambiarlas en cualquier momento desde la pestaña "Configuración".
+const DEFAULT_SUPABASE_CONFIG = {
+  url: 'https://lirflipqomvxyrymocsi.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcmZsaXBxb212eHlyeW1vY3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI3MTc4MzcsImV4cCI6MjA0ODI5NzgzN30.4KMEM0JZ3Jw3eM2n1TQtKRfKcB0eJnU1hJ2K5rX9L6Y',
+};
+
 const state = {
   tab: 'inicio',
   drivers: [],
@@ -280,11 +288,44 @@ const TABS = [
   {id:'enlaces', label:'Enlaces de interés', icon:'&#128279;'},
 ];
 /* =========================================================
+<<<<<<< HEAD
    CLIENTE SUPABASE (REST / PostgREST) — vía servidor local
+=======
+   PERSISTENCIA DE CONFIGURACIÓN (Claude storage, solo la config)
+========================================================= */
+async function loadConfig(){
+  try{
+    const r = await window.storage.get('supabase-config', false);
+    if(r && r.value){ state.config = JSON.parse(r.value); return; }
+  }catch(e){ /* no config guardada todavía */ }
+  // sin config guardada -> usar las credenciales por defecto
+  state.config = { ...DEFAULT_SUPABASE_CONFIG };
+}
+async function saveConfig(cfg){
+  await window.storage.set('supabase-config', JSON.stringify(cfg), false);
+  state.config = cfg;
+}
+
+/* =========================================================
+   CLIENTE SUPABASE (REST / PostgREST)
+>>>>>>> 8f73bf25a7c8a33e77ce68dce593d8140b6f036c
 ========================================================= */
 async function supaRequest(path, opts={}){
   const method = opts.method || 'GET';
+<<<<<<< HEAD
   const headers = {};
+=======
+  const headers = {
+    'apikey': cfg.key,
+  };
+  // Las claves "anon" clásicas son JWT (empiezan por "eyJ") y PostgREST
+  // necesita también recibirlas en Authorization: Bearer para resolver el rol.
+  // Las claves nuevas (sb_publishable_..., sb_secret_...) NO son JWT y NO
+  // deben mandarse en Authorization: Bearer, o Supabase responde 401.
+  if(cfg.key.startsWith('eyJ')){
+    headers['Authorization'] = 'Bearer ' + cfg.key;
+  }
+>>>>>>> 8f73bf25a7c8a33e77ce68dce593d8140b6f036c
   if(method !== 'GET' && method !== 'DELETE'){
     headers['Content-Type'] = 'application/json';
   }
@@ -298,6 +339,20 @@ async function supaRequest(path, opts={}){
   }catch(networkErr){
     throw new Error('No se pudo contactar con el servidor local. ¿Sigue corriendo "node server.js" en la terminal?');
   }
+<<<<<<< HEAD
+=======
+  const url = cfg.url.replace(/\/$/,'') + '/rest/v1/' + path;
+  let res;
+  try{
+    res = await fetch(url, {
+      method,
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  }catch(networkErr){
+    throw new Error('No se pudo conectar con ' + cfg.url + '. Revisa: 1) que el proyecto no esté en pausa (Supabase lo pausa tras inactividad, hay que pulsar "Restore project" en el dashboard), 2) que la URL esté bien escrita, 3) tu conexión a internet.');
+  }
+>>>>>>> 8f73bf25a7c8a33e77ce68dce593d8140b6f036c
   if(!res.ok){
     let msg = 'Error ' + res.status;
     try{ const j = await res.json(); msg += ': ' + (j.message || JSON.stringify(j)); }catch(e){}
