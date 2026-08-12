@@ -8,19 +8,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#171B1F;
-    --bg-elev:#20252B;
-    --bg-elev-2:#262C33;
-    --plate:#0F1215;
-    --yellow:#F2B705;
-    --yellow-dim:#C99A04;
-    --blue:#4E8FD1;
+    --bg:#12161A;
+    --bg-elev:#1B2026;
+    --bg-elev-2:#222830;
+    --plate:#0D1013;
+    --blue-dark:#1D4ED8;
+    --blue-accent:#2563EB;
+    --blue-hover:#1E40AF;
+    --blue-soft:rgba(37, 99, 235, 0.15);
+    --blue-dim:#3B82F6;
     --red:#E15252;
     --green:#4CAF7D;
     --text:#F3F1EA;
     --text-dim:#9AA1AB;
     --text-faint:#6B7178;
-    --border:#31373F;
+    --border:#2A323D;
     --font-display:'Barlow Condensed',sans-serif;
     --font-body:'Inter',sans-serif;
     --font-mono:'JetBrains Mono',monospace;
@@ -35,16 +37,35 @@
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
   }
-  ::selection{background:var(--yellow);color:#1a1a1a;}
-  a{color:var(--blue);}
+  ::selection{background:var(--blue-accent);color:#fff;}
+  a{color:var(--blue-dim);}
   button{font-family:var(--font-body);cursor:pointer;}
   input,textarea,select{font-family:var(--font-body);}
 
-  /* ---------- layout ---------- */
+  /* ---------- Login Screen ---------- */
+  #loginScreen{
+    position:fixed;inset:0;background:var(--bg);z-index:999;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .login-box{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;
+    width:100%;max-width:380px;padding:32px;box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  }
+  .login-box .brand-title{
+    font-family:var(--font-display);font-weight:800;font-size:32px;
+    color:var(--blue-dim);text-align:center;margin-bottom:6px;
+  }
+  .login-box .brand-title span{color:var(--text);}
+  .login-box .brand-sub{
+    text-align:center;color:var(--text-faint);font-size:12px;letter-spacing:1.5px;
+    text-transform:uppercase;margin-bottom:24px;
+  }
+
+  /* ---------- Layout ---------- */
   #app{display:flex;min-height:100vh;}
 
   .sidebar{
-    width:230px;flex:none;background:var(--plate);
+    width:240px;flex:none;background:var(--plate);
     border-right:1px solid var(--border);
     display:flex;flex-direction:column;
     position:sticky;top:0;height:100vh;
@@ -55,7 +76,7 @@
   }
   .brand .mark{
     font-family:var(--font-display);font-weight:800;font-size:26px;
-    letter-spacing:0.5px;color:var(--yellow);line-height:1;
+    letter-spacing:0.5px;color:var(--blue-dim);line-height:1;
   }
   .brand .mark span{color:var(--text);}
   .brand .sub{font-size:11px;color:var(--text-faint);margin-top:4px;letter-spacing:1.5px;text-transform:uppercase;}
@@ -69,17 +90,15 @@
     text-align:left;transition:background .15s,color .15s;
   }
   .navbtn:hover{background:var(--bg-elev);color:var(--text);}
-  .navbtn.active{background:var(--yellow);color:#1a1a1a;}
+  .navbtn.active{background:var(--blue-dark);color:#ffffff;}
   .navbtn .ic{font-size:16px;width:18px;text-align:center;}
 
-  .sidebar-foot{padding:14px;border-top:1px solid var(--border);}
+  .sidebar-foot{padding:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
   .status-pill{
     display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-faint);
     padding:8px 10px;border-radius:8px;background:var(--bg-elev);
   }
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);flex:none;}
-  .dot.ok{background:var(--green);}
-  .dot.off{background:var(--red);}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none;}
 
   .main{flex:1;min-width:0;display:flex;flex-direction:column;}
   .topbar{
@@ -91,10 +110,10 @@
   .topbar .subtitle{color:var(--text-dim);font-size:14px;margin-top:2px;}
   .content{padding:20px 32px 60px;flex:1;}
 
-  /* road-dash divider */
+  /* Road-dash divider */
   .road{
-    height:5px;border-radius:3px;margin:18px 0 22px;
-    background:repeating-linear-gradient(90deg, var(--yellow) 0 22px, transparent 22px 40px);
+    height:4px;border-radius:2px;margin:18px 0 22px;
+    background:repeating-linear-gradient(90deg, var(--blue-dark) 0 22px, transparent 22px 40px);
     opacity:0.9;
   }
 
@@ -104,38 +123,39 @@
     display:inline-flex;align-items:center;gap:7px;transition:border-color .15s, background .15s;
   }
   .btn:hover{border-color:var(--text-faint);}
-  .btn-primary{background:var(--yellow);color:#1a1a1a;border-color:var(--yellow);}
-  .btn-primary:hover{background:var(--yellow-dim);border-color:var(--yellow-dim);}
+  .btn-primary{background:var(--blue-dark);color:#ffffff;border-color:var(--blue-dark);}
+  .btn-primary:hover{background:var(--blue-hover);border-color:var(--blue-hover);}
   .btn-danger{color:var(--red);}
   .btn-sm{padding:6px 11px;font-size:12.5px;}
 
   .grid{display:grid;gap:14px;}
-  .grid-cards{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));}
+  .grid-cards{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
 
   .card{
     background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);
     padding:16px;
   }
-  .card-hover:hover{border-color:var(--text-faint);}
+  .card-hover:hover{border-color:var(--blue-dim);}
 
   .driver-card{cursor:pointer;position:relative;}
   .driver-card .avatar{
     width:44px;height:44px;border-radius:50%;background:var(--bg-elev-2);
     display:flex;align-items:center;justify-content:center;
-    font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--yellow);
+    font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--blue-dim);
     border:1px solid var(--border);margin-bottom:10px;
   }
   .driver-card h3{margin:0 0 2px;font-size:16px;font-weight:700;}
   .driver-card p{margin:0;font-size:12.5px;color:var(--text-dim);}
   .driver-card .meta{margin-top:10px;display:flex;gap:14px;}
-  .driver-card .meta div{font-family:var(--font-mono);font-size:13px;color:var(--yellow);}
+  .driver-card .meta div{font-family:var(--font-mono);font-size:13px;color:var(--blue-dim);}
   .driver-card .meta span{display:block;font-family:var(--font-body);font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;}
+  
   .add-card{
     border:1.5px dashed var(--border);background:transparent;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     color:var(--text-dim);min-height:150px;font-weight:600;font-size:13.5px;gap:8px;
   }
-  .add-card:hover{border-color:var(--yellow);color:var(--yellow);}
+  .add-card:hover{border-color:var(--blue-dim);color:var(--blue-dim);}
   .add-card .plus{font-size:26px;line-height:1;}
 
   .section-title{
@@ -150,18 +170,14 @@
   }
   tbody td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
   tbody tr:hover{background:var(--bg-elev-2);}
-  .num{font-family:var(--font-mono);color:var(--yellow);}
+  .num{font-family:var(--font-mono);color:var(--blue-dim);}
   .row-actions{display:flex;gap:6px;justify-content:flex-end;}
 
   .badge{
     display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;
-    text-transform:uppercase;letter-spacing:0.4px;
+    text-transform:uppercase;letter-spacing:0.4px;background:var(--blue-soft);color:var(--blue-dim);
   }
-  .badge-plan{background:rgba(78,143,209,.15);color:var(--blue);}
-  .badge-curso{background:rgba(242,183,5,.15);color:var(--yellow);}
-  .badge-fin{background:rgba(76,175,125,.15);color:var(--green);}
-  .badge-descanso{background:rgba(78,143,209,.15);color:var(--blue);}
-  .badge-comida{background:rgba(242,183,5,.15);color:var(--yellow);}
+  .badge-comida{background:rgba(242,183,5,.15);color:#F2B705;}
   .badge-pernocta{background:rgba(158,120,255,.15);color:#9E78FF;}
 
   .empty{
@@ -174,12 +190,12 @@
     background:var(--bg-elev);margin-bottom:8px;align-items:flex-start;
   }
   .note-item.overdue{border-color:var(--red);}
-  .note-item .chk{margin-top:2px;flex:none;width:18px;height:18px;accent-color:var(--yellow);cursor:pointer;}
+  .note-item .chk{margin-top:2px;flex:none;width:18px;height:18px;accent-color:var(--blue-dark);cursor:pointer;}
   .note-item .body{flex:1;min-width:0;}
   .note-item h4{margin:0 0 3px;font-size:14.5px;font-weight:600;}
   .note-item.done h4{text-decoration:line-through;color:var(--text-faint);}
   .note-item p{margin:0;font-size:12.5px;color:var(--text-dim);}
-  .note-item .when{font-family:var(--font-mono);font-size:11.5px;color:var(--yellow);margin-top:5px;}
+  .note-item .when{font-family:var(--font-mono);font-size:11.5px;color:var(--blue-dim);margin-top:5px;}
   .note-item.overdue .when{color:var(--red);}
 
   .link-card{display:flex;flex-direction:column;gap:6px;}
@@ -188,9 +204,9 @@
   .link-card .cat{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;}
   .link-card .desc{font-size:12.5px;color:var(--text-dim);}
 
-  /* modal */
+  /* Overlay & Modal */
   .overlay{
-    position:fixed;inset:0;background:rgba(10,12,14,.65);backdrop-filter:blur(2px);
+    position:fixed;inset:0;background:rgba(10,12,14,.75);backdrop-filter:blur(3px);
     display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;
   }
   .modal{
@@ -204,29 +220,34 @@
     width:100%;background:var(--plate);border:1px solid var(--border);color:var(--text);
     padding:10px 11px;border-radius:8px;font-size:14px;
   }
-  .field input:focus, .field textarea:focus, .field select:focus{outline:none;border-color:var(--yellow);}
+  .field input:focus, .field textarea:focus, .field select:focus{outline:none;border-color:var(--blue-dim);}
   .field textarea{resize:vertical;min-height:64px;}
   .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 
   .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;}
   .toast{
-    background:var(--bg-elev-2);border:1px solid var(--border);border-left:4px solid var(--yellow);
+    background:var(--bg-elev-2);border:1px solid var(--border);border-left:4px solid var(--blue-dim);
     padding:11px 16px;border-radius:8px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.35);
     max-width:320px;
   }
   .toast.error{border-left-color:var(--red);}
   .toast.success{border-left-color:var(--green);}
 
-  .loading{color:var(--text-faint);font-size:13.5px;padding:20px 0;}
-
-  .stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+  .stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
   .stat{
     background:var(--plate);border:1px solid var(--border);border-radius:10px;
-    padding:12px 16px;min-width:120px;
+    padding:12px 16px;min-width:140px;
   }
-  .stat .v{font-family:var(--font-mono);font-size:22px;color:var(--yellow);font-weight:700;}
+  .stat .v{font-family:var(--font-mono);font-size:22px;color:var(--blue-dim);font-weight:700;}
   .stat .l{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+
+  /* Filter bar */
+  .filter-bar{
+    display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;
+    background:var(--bg-elev);padding:14px;border-radius:var(--radius);border:1px solid var(--border);
+  }
+  .filter-bar .field{margin-bottom:0;}
 
   @media (max-width:820px){
     #app{flex-direction:column;}
@@ -240,17 +261,42 @@
     .field-row{grid-template-columns:1fr;}
   }
 
-  :focus-visible{outline:2px solid var(--yellow);outline-offset:2px;}
+  :focus-visible{outline:2px solid var(--blue-dim);outline-offset:2px;}
 </style>
 </head>
 <body>
-<div id="app"></div>
+
+<!-- ### VENTANA DE LOGIN ### -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="brand-title">RUTA<span>//</span>CTRL</div>
+    <div class="brand-sub">Acceso Seguro</div>
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="Introduce usuario" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="Introduce contraseña" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center;margin-top:8px;">Iniciar Sesión</button>
+  </div>
+</div>
+
+<div id="app" style="display:none;"></div>
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
 /* =========================================================
-   ESTADO
+   ### CREDENCIALES ###
+   Puedes modificar aquí el usuario y la contraseña por defecto.
 ========================================================= */
+const DEFAULT_AUTH = {
+  user: 'Alina',
+  pass: '191985'
+};
+/* ========================================================= */
+
 const state = {
   tab: 'inicio',
   drivers: [],
@@ -260,19 +306,23 @@ const state = {
   links: [],
   loaded: false,
   modal: null,
+  selectedDriverId: null,
+  filterFrom: '',
+  filterTo: ''
 };
 
 const TABS = [
-  {id:'inicio', label:'Inicio', icon:'&#9679;'},
+  {id:'inicio', label:'Inicio', icon:'&#127968;'},
   {id:'camioneros', label:'Camioneros', icon:'&#128100;'},
   {id:'viajes', label:'Viajes', icon:'&#128506;'},
-  {id:'descansos', label:'Descansos y Km', icon:'&#9201;'},
+  {id:'descansos', label:'Descansos', icon:'&#9201;'},
   {id:'notas', label:'Notas y Recordatorios', icon:'&#128221;'},
   {id:'enlaces', label:'Enlaces de interés', icon:'&#128279;'},
+  {id:'perfil', label:'Detalle Camionero', hidden: true}
 ];
 
 /* =========================================================
-   ALMACENAMIENTO LOCAL (PERSISTENCIA SIN SERVIDOR)
+   PERSISTENCIA LOCAL (localStorage)
 ========================================================= */
 const storage = {
   get: (key) => {
@@ -353,6 +403,10 @@ function driverName(id){
   const d = state.drivers.find(x=>String(x.id)===String(id));
   return d ? d.name : '—';
 }
+function tripLabel(id){
+  const t = state.trips.find(x=>String(x.id)===String(id));
+  return t ? `${t.origin} → ${t.destination}` : '—';
+}
 function toast(msg, kind){
   const wrap = document.getElementById('toastWrap');
   if(!wrap) return;
@@ -369,6 +423,48 @@ function durationLabel(start,end){
   const h = Math.floor(ms/3600000);
   const m = Math.round((ms%3600000)/60000);
   return h+'h '+m+'m';
+}
+
+function setDefaultDateFilters(){
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 14);
+  state.filterFrom = start.toISOString().split('T')[0];
+  state.filterTo = end.toISOString().split('T')[0];
+}
+
+/* =========================================================
+   SISTEMA DE AUTENTICACIÓN
+========================================================= */
+function checkAuth(){
+  const isAuth = sessionStorage.getItem('rutactrl_auth');
+  if(isAuth === 'true'){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+}
+
+document.getElementById('loginBtn').addEventListener('click', performLogin);
+document.getElementById('loginPass').addEventListener('keypress', (e)=>{ if(e.key==='Enter') performLogin(); });
+
+function performLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  if(u === DEFAULT_AUTH.user && p === DEFAULT_AUTH.pass){
+    sessionStorage.setItem('rutactrl_auth', 'true');
+    checkAuth();
+  } else {
+    alert('Usuario o contraseña incorrectos.');
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem('rutactrl_auth');
+  window.location.reload();
 }
 
 /* =========================================================
@@ -392,10 +488,11 @@ async function loadAll(){
 }
 
 /* =========================================================
-   RENDER: SHELL
+   RENDER
 ========================================================= */
 function render(){
   const app = document.getElementById('app');
+  const visibleTabs = TABS.filter(t => !t.hidden);
   app.innerHTML = `
     <div class="sidebar">
       <div class="brand">
@@ -403,7 +500,7 @@ function render(){
         <div class="sub">Gestión de flota</div>
       </div>
       <ul class="navlist">
-        ${TABS.map(t => `
+        ${visibleTabs.map(t => `
           <li>
             <button class="navbtn ${state.tab===t.id?'active':''}" data-tab="${t.id}">
               <span class="ic">${t.icon}</span>${esc(t.label)}
@@ -412,9 +509,10 @@ function render(){
       </ul>
       <div class="sidebar-foot">
         <div class="status-pill">
-          <span class="dot ok"></span>
+          <span class="dot"></span>
           Modo Local Activo
         </div>
+        <button class="btn btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">Cerrar Sesión</button>
       </div>
     </div>
     <div class="main">
@@ -436,12 +534,13 @@ function render(){
 
 function topbarSubtitle(){
   const map = {
-    inicio:'Notas destacadas y perfiles de camioneros',
+    inicio:'Notas destacadas y camioneros',
     camioneros:'Alta y gestión de conductores',
-    viajes:'Rutas, fechas y kilometraje por viaje',
-    descansos:'Registro de descansos y kilómetros recorridos',
+    viajes:'Rutas, fechas y kilometraje',
+    descansos:'Registro de descansos',
     notas:'Notas libres y recordatorios',
     enlaces:'Accesos guardados',
+    perfil:'Detalle y rendimiento por fechas'
   };
   return map[state.tab] || '';
 }
@@ -454,14 +553,21 @@ function topbarAction(){
     descansos: `<button class="btn btn-primary" data-action="new-rest">+ Nuevo descanso</button>`,
     notas: `<button class="btn btn-primary" data-action="new-note">+ Nueva nota</button>`,
     enlaces: `<button class="btn btn-primary" data-action="new-link">+ Nuevo enlace</button>`,
+    perfil: `<button class="btn" data-action="back-drivers">&larr; Volver a camioneros</button>`
   };
   return map[state.tab] || '';
 }
 
 function bindNav(){
   document.querySelectorAll('.navbtn').forEach(b=>{
-    b.addEventListener('click', ()=>{ state.tab = b.dataset.tab; render(); });
+    b.addEventListener('click', ()=>{ 
+      state.tab = b.dataset.tab; 
+      render(); 
+    });
   });
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(logoutBtn) logoutBtn.addEventListener('click', logout);
+
   const topAction = document.querySelector('.topbar [data-action]');
   if(topAction){
     topAction.addEventListener('click', ()=>{
@@ -471,13 +577,11 @@ function bindNav(){
       if(a==='new-rest') openModal('rest', null);
       if(a==='new-note') openModal('note', null);
       if(a==='new-link') openModal('link', null);
+      if(a==='back-drivers') { state.tab = 'camioneros'; render(); }
     });
   }
 }
 
-/* =========================================================
-   RENDER: CONTENIDO POR PESTAÑA
-========================================================= */
 function renderContent(){
   if(!state.loaded) return `<div class="loading">Cargando datos…</div>`;
   if(state.tab === 'inicio') return renderInicio();
@@ -486,6 +590,7 @@ function renderContent(){
   if(state.tab === 'descansos') return renderDescansos();
   if(state.tab === 'notas') return renderNotas();
   if(state.tab === 'enlaces') return renderEnlaces();
+  if(state.tab === 'perfil') return renderPerfil();
   return '';
 }
 
@@ -496,6 +601,7 @@ function bindTabContent(){
   if(state.tab === 'descansos') bindDescansos();
   if(state.tab === 'notas') bindNotas();
   if(state.tab === 'enlaces') bindEnlaces();
+  if(state.tab === 'perfil') bindPerfil();
 }
 
 /* ---------- INICIO ---------- */
@@ -519,15 +625,16 @@ function renderInicio(){
     </div>
   `;
 }
+
 function driverCardHtml(d){
   const kmTotal = state.trips.filter(t=>String(t.driver_id)===String(d.id))
-    .reduce((sum,t)=> sum + (Number(t.km_end||0) - Number(t.km_start||0) > 0 ? (Number(t.km_end||0)-Number(t.km_start||0)) : 0), 0);
+    .reduce((sum,t)=> sum + Number(t.km_total||0), 0);
   const restCount = state.rests.filter(r=>String(r.driver_id)===String(d.id)).length;
   return `
-    <div class="card driver-card card-hover" data-driver="${d.id}">
+    <div class="card driver-card card-hover" data-view-driver="${d.id}">
       <div class="avatar">${esc(initials(d.name))}</div>
       <h3>${esc(d.name)}</h3>
-      <p>${esc(d.license_number||'Sin nº de carnet')}</p>
+      <p>${esc(d.phone||'Sin teléfono')}</p>
       <div class="meta">
         <div>${kmTotal.toLocaleString('es-ES')}<span>Km totales</span></div>
         <div>${restCount}<span>Descansos</span></div>
@@ -535,6 +642,7 @@ function driverCardHtml(d){
     </div>
   `;
 }
+
 function noteRowHtml(n){
   const overdue = n.reminder_at && !n.done && new Date(n.reminder_at) < new Date();
   return `
@@ -548,9 +656,15 @@ function noteRowHtml(n){
     </div>
   `;
 }
+
 function bindInicio(){
-  document.querySelectorAll('[data-driver]').forEach(el=>{
-    el.addEventListener('click', ()=>{ state.tab='camioneros'; render(); });
+  document.querySelectorAll('[data-view-driver]').forEach(el=>{
+    el.addEventListener('click', ()=>{ 
+      state.selectedDriverId = el.dataset.viewDriver;
+      setDefaultDateFilters();
+      state.tab = 'perfil'; 
+      render(); 
+    });
   });
   const newBtn = document.querySelector('[data-action="new-driver-inline"]');
   if(newBtn) newBtn.addEventListener('click', ()=> openModal('driver', null));
@@ -563,12 +677,12 @@ function renderCamioneros(){
   return `
     <div class="grid grid-cards">
       ${state.drivers.map(d => `
-        <div class="card driver-card card-hover">
+        <div class="card driver-card card-hover" data-view-driver="${d.id}">
           <div class="avatar">${esc(initials(d.name))}</div>
           <h3>${esc(d.name)}</h3>
-          <p>${esc(d.phone||'')}${d.phone && d.license_number ? ' · ':''}${esc(d.license_number||'')}</p>
-          ${d.notes ? `<p style="margin-top:6px;">${esc(d.notes)}</p>` : ''}
-          <div class="modal-actions" style="margin-top:12px;">
+          <p>${esc(d.phone||'Sin teléfono')}</p>
+          ${d.notes ? `<p style="margin-top:6px;font-size:12px;color:var(--text-faint);">${esc(d.notes)}</p>` : ''}
+          <div class="modal-actions" style="margin-top:12px;" onclick="event.stopPropagation()">
             <button class="btn btn-sm" data-edit-driver="${d.id}">Editar</button>
             <button class="btn btn-sm btn-danger" data-del-driver="${d.id}">Eliminar</button>
           </div>
@@ -577,24 +691,117 @@ function renderCamioneros(){
     </div>
   `;
 }
+
 function bindCamioneros(){
-  document.querySelectorAll('[data-edit-driver]').forEach(b=>{
-    b.addEventListener('click', ()=> openModal('driver', state.drivers.find(d=>String(d.id)===String(b.dataset.editDriver))));
-  });
-  document.querySelectorAll('[data-del-driver]').forEach(b=>{
-    b.addEventListener('click', async ()=>{
-      if(!confirm('¿Eliminar este camionero? Sus viajes y descansos quedarán sin asignar.')) return;
-      try{ await api.drivers.remove(b.dataset.delDriver); toast('Camionero eliminado.', 'success'); await loadAll(); }
-      catch(e){ toast(e.message, 'error'); }
+  document.querySelectorAll('[data-view-driver]').forEach(el=>{
+    el.addEventListener('click', ()=>{ 
+      state.selectedDriverId = el.dataset.viewDriver;
+      setDefaultDateFilters();
+      state.tab = 'perfil'; 
+      render(); 
     });
   });
+  document.querySelectorAll('[data-edit-driver]').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openModal('driver', state.drivers.find(d=>String(d.id)===String(b.dataset.editDriver)));
+    });
+  });
+  document.querySelectorAll('[data-del-driver]').forEach(b=>{
+    b.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      if(!confirm('¿Eliminar este camionero?')) return;
+      try{ await api.drivers.remove(b.dataset.delDriver); toast('Camionero eliminado.', 'success'); await loadAll(); }
+      catch(err){ toast(err.message, 'error'); }
+    });
+  });
+}
+
+/* ---------- DETALLE DEL CAMIONERO (PERFIL CON FILTRO) ---------- */
+function renderPerfil(){
+  const driver = state.drivers.find(d=>String(d.id)===String(state.selectedDriverId));
+  if(!driver) return `<div class="empty">Camionero no encontrado.</div>`;
+
+  const fromTime = state.filterFrom ? new Date(state.filterFrom + 'T00:00:00').getTime() : 0;
+  const toTime = state.filterTo ? new Date(state.filterTo + 'T23:59:59').getTime() : Infinity;
+
+  // Filtrar viajes del conductor en rango
+  const tripsInRange = state.trips.filter(t => {
+    if(String(t.driver_id) !== String(driver.id)) return false;
+    const tDate = new Date(t.start_date || t.created_at).getTime();
+    return tDate >= fromTime && tDate <= toTime;
+  });
+
+  const kmPeriodo = tripsInRange.reduce((s,t)=> s + Number(t.km_total||0), 0);
+
+  // Filtrar descansos del conductor en rango
+  const restsInRange = state.rests.filter(r => {
+    if(String(r.driver_id) !== String(driver.id)) return false;
+    const rDate = new Date(r.start_time).getTime();
+    return rDate >= fromTime && rDate <= toTime;
+  });
+
+  return `
+    <div style="margin-bottom:20px;">
+      <h2 style="font-family:var(--font-display);font-size:28px;margin:0 0 4px;">${esc(driver.name)}</h2>
+      <p style="color:var(--text-dim);margin:0;">Teléfono: ${esc(driver.phone||'—')}</p>
+      ${driver.notes ? `<p style="color:var(--text-faint);font-size:13px;margin:4px 0 0;">Notas: ${esc(driver.notes)}</p>` : ''}
+    </div>
+
+    <div class="filter-bar">
+      <div class="field">
+        <label>Desde</label>
+        <input type="date" id="pFilterFrom" value="${state.filterFrom}">
+      </div>
+      <div class="field">
+        <label>Hasta</label>
+        <input type="date" id="pFilterTo" value="${state.filterTo}">
+      </div>
+      <button class="btn btn-primary" id="applyFilterBtn">Aplicar Filtro</button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="v">${kmPeriodo.toLocaleString('es-ES')}</div><div class="l">Km en período</div></div>
+      <div class="stat"><div class="v">${restsInRange.length}</div><div class="l">Descansos en período</div></div>
+    </div>
+
+    <div class="section-title">Descansos Registrados</div>
+    ${restsInRange.length ? `
+    <table>
+      <thead><tr>
+        <th>Tipo</th><th>Viaje Asignado</th><th>Inicio</th><th>Fin</th><th>Duración</th>
+      </tr></thead>
+      <tbody>
+        ${restsInRange.map(r => `
+          <tr>
+            <td><span class="badge ${r.rest_type==='comida'?'badge-comida':(r.rest_type==='pernocta'?'badge-pernocta':'')}">${esc(r.rest_type)}</span></td>
+            <td>${esc(tripLabel(r.trip_id))}</td>
+            <td>${fmtDateTime(r.start_time)}</td>
+            <td>${fmtDateTime(r.end_time)}</td>
+            <td class="num">${durationLabel(r.start_time, r.end_time)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>` : `<div class="empty">Sin descansos en el período seleccionado.</div>`}
+  `;
+}
+
+function bindPerfil(){
+  const applyBtn = document.getElementById('applyFilterBtn');
+  if(applyBtn){
+    applyBtn.addEventListener('click', ()=>{
+      state.filterFrom = document.getElementById('pFilterFrom').value;
+      state.filterTo = document.getElementById('pFilterTo').value;
+      render();
+    });
+  }
 }
 
 /* ---------- VIAJES ---------- */
 function renderViajes(){
   const rows = state.trips;
   return `
-    <div class="field" style="max-width:260px;">
+    <div class="field" style="max-width:260px;margin-bottom:14px;">
       <label>Filtrar por camionero</label>
       <select id="driverFilterTrips">
         <option value="">Todos</option>
@@ -604,7 +811,7 @@ function renderViajes(){
     ${rows.length ? `
     <table>
       <thead><tr>
-        <th>Camionero</th><th>Origen → Destino</th><th>Fechas</th><th>Km</th><th>Estado</th><th></th>
+        <th>Camionero</th><th>Origen → Destino</th><th>Fechas</th><th>Km Totales</th><th></th>
       </tr></thead>
       <tbody id="tripsBody">
         ${rows.map(tripRowHtml).join('')}
@@ -612,17 +819,15 @@ function renderViajes(){
     </table>` : `<div class="empty">Sin viajes todavía. Crea uno con "+ Nuevo viaje".</div>`}
   `;
 }
+
 function tripRowHtml(t){
-  const km = (Number(t.km_end||0) - Number(t.km_start||0));
-  const badgeClass = t.status==='en_curso' ? 'badge-curso' : (t.status==='finalizado' ? 'badge-fin' : 'badge-plan');
-  const label = t.status==='en_curso' ? 'En curso' : (t.status==='finalizado' ? 'Finalizado' : 'Planificado');
+  const km = Number(t.km_total||0);
   return `
     <tr data-driver-row="${t.driver_id||''}">
       <td>${esc(driverName(t.driver_id))}</td>
       <td>${esc(t.origin)} &rarr; ${esc(t.destination)}</td>
       <td>${fmtDate(t.start_date)} — ${fmtDate(t.end_date)}</td>
       <td class="num">${km>0 ? km.toLocaleString('es-ES')+' km' : '—'}</td>
-      <td><span class="badge ${badgeClass}">${label}</span></td>
       <td>
         <div class="row-actions">
           <button class="btn btn-sm" data-edit-trip="${t.id}">Editar</button>
@@ -632,6 +837,7 @@ function tripRowHtml(t){
     </tr>
   `;
 }
+
 function bindViajes(){
   const filter = document.getElementById('driverFilterTrips');
   if(filter) filter.addEventListener('change', ()=>{
@@ -652,23 +858,17 @@ function bindViajes(){
   });
 }
 
-/* ---------- DESCANSOS Y KM ---------- */
+/* ---------- DESCANSOS ---------- */
 function renderDescansos(){
-  const totalKm = state.trips.reduce((s,t)=>{
-    const k = Number(t.km_end||0) - Number(t.km_start||0);
-    return s + (k>0?k:0);
-  },0);
-  const totalRests = state.rests.length;
   const rows = state.rests;
   return `
     <div class="stat-row">
-      <div class="stat"><div class="v">${totalKm.toLocaleString('es-ES')}</div><div class="l">Km totales flota</div></div>
-      <div class="stat"><div class="v">${totalRests}</div><div class="l">Descansos registrados</div></div>
+      <div class="stat"><div class="v">${rows.length}</div><div class="l">Descansos totales registrados</div></div>
     </div>
     ${rows.length ? `
     <table>
       <thead><tr>
-        <th>Camionero</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Km</th><th></th>
+        <th>Camionero</th><th>Viaje Asignado</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Duración</th><th></th>
       </tr></thead>
       <tbody>
         ${rows.map(restRowHtml).join('')}
@@ -676,17 +876,17 @@ function renderDescansos(){
     </table>` : `<div class="empty">Sin descansos registrados. Crea uno con "+ Nuevo descanso".</div>`}
   `;
 }
+
 function restRowHtml(r){
-  const badgeClass = r.rest_type==='comida' ? 'badge-comida' : (r.rest_type==='pernocta' ? 'badge-pernocta' : 'badge-descanso');
-  const label = r.rest_type==='comida' ? 'Comida' : (r.rest_type==='pernocta' ? 'Pernocta' : 'Descanso');
+  const badgeClass = r.rest_type==='comida' ? 'badge-comida' : (r.rest_type==='pernocta' ? 'badge-pernocta' : '');
   return `
     <tr>
       <td>${esc(driverName(r.driver_id))}</td>
-      <td><span class="badge ${badgeClass}">${label}</span></td>
+      <td>${esc(tripLabel(r.trip_id))}</td>
+      <td><span class="badge ${badgeClass}">${esc(r.rest_type)}</span></td>
       <td>${fmtDateTime(r.start_time)}</td>
       <td>${fmtDateTime(r.end_time)}</td>
       <td class="num">${durationLabel(r.start_time, r.end_time)}</td>
-      <td class="num">${r.km_at_rest ? Number(r.km_at_rest).toLocaleString('es-ES')+' km' : '—'}</td>
       <td>
         <div class="row-actions">
           <button class="btn btn-sm" data-edit-rest="${r.id}">Editar</button>
@@ -696,6 +896,7 @@ function restRowHtml(r){
     </tr>
   `;
 }
+
 function bindDescansos(){
   document.querySelectorAll('[data-edit-rest]').forEach(b=>{
     b.addEventListener('click', ()=> openModal('rest', state.rests.find(r=>String(r.id)===String(b.dataset.editRest))));
@@ -709,7 +910,7 @@ function bindDescansos(){
   });
 }
 
-/* ---------- NOTAS Y RECORDATORIOS ---------- */
+/* ---------- NOTAS ---------- */
 function renderNotas(){
   if(!state.notes.length) return `<div class="empty">Sin notas todavía. Crea una con "+ Nueva nota".</div>`;
   const sorted = [...state.notes].sort((a,b)=>{
@@ -733,6 +934,7 @@ function renderNotas(){
     </div>
   `).join('');
 }
+
 function bindNotas(){
   bindNoteToggles();
   document.querySelectorAll('[data-edit-note]').forEach(b=>{
@@ -746,6 +948,7 @@ function bindNotas(){
     });
   });
 }
+
 function bindNoteToggles(){
   document.querySelectorAll('[data-note-toggle]').forEach(cb=>{
     cb.addEventListener('change', async ()=>{
@@ -755,7 +958,7 @@ function bindNoteToggles(){
   });
 }
 
-/* ---------- ENLACES DE INTERÉS ---------- */
+/* ---------- ENLACES ---------- */
 function renderEnlaces(){
   if(!state.links.length) return `<div class="empty">Sin enlaces guardados. Crea uno con "+ Nuevo enlace".</div>`;
   return `
@@ -774,6 +977,7 @@ function renderEnlaces(){
     </div>
   `;
 }
+
 function bindEnlaces(){
   document.querySelectorAll('[data-edit-link]').forEach(b=>{
     b.addEventListener('click', ()=> openModal('link', state.links.find(l=>String(l.id)===String(b.dataset.editLink))));
@@ -788,7 +992,7 @@ function bindEnlaces(){
 }
 
 /* =========================================================
-   MODALES (CREAR / EDITAR)
+   MODALES
 ========================================================= */
 function openModal(type, data){
   state.modal = {type, data: data || null};
@@ -798,12 +1002,14 @@ function closeModal(){
   state.modal = null;
   renderModal();
 }
-function driverOptions(selected){
-  return `<option value="">— Sin asignar —</option>` + state.drivers.map(d=>
+function driverOptions(selected, required=false){
+  let opts = required ? `<option value="">— Seleccionar conductor —</option>` : `<option value="">— Sin asignar —</option>`;
+  return opts + state.drivers.map(d=>
     `<option value="${d.id}" ${String(selected)===String(d.id)?'selected':''}>${esc(d.name)}</option>`).join('');
 }
-function tripOptions(selected){
-  return `<option value="">— Sin viaje —</option>` + state.trips.map(t=>
+function tripOptions(selected, required=false){
+  let opts = required ? `<option value="">— Seleccionar viaje —</option>` : `<option value="">— Sin viaje —</option>`;
+  return opts + state.trips.map(t=>
     `<option value="${t.id}" ${String(selected)===String(t.id)?'selected':''}>${esc(t.origin)} &rarr; ${esc(t.destination)}</option>`).join('');
 }
 function toLocalInput(dt){
@@ -827,11 +1033,8 @@ function renderModal(){
     inner = `
       <h2>${isEdit?'Editar':'Nuevo'} camionero</h2>
       <div class="field"><label>Nombre</label><input id="f_name" value="${esc(data?.name)}"></div>
-      <div class="field-row">
-        <div class="field"><label>Teléfono</label><input id="f_phone" value="${esc(data?.phone)}"></div>
-        <div class="field"><label>Nº de carnet</label><input id="f_license" value="${esc(data?.license_number)}"></div>
-      </div>
-      <div class="field"><label>Notas</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
+      <div class="field"><label>Teléfono</label><input id="f_phone" value="${esc(data?.phone)}"></div>
+      <div class="field"><label>Notas (opcional)</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
     `;
   }
   if(type === 'trip'){
@@ -846,28 +1049,16 @@ function renderModal(){
         <div class="field"><label>Fecha inicio</label><input type="date" id="f_start_date" value="${data?.start_date||''}"></div>
         <div class="field"><label>Fecha fin</label><input type="date" id="f_end_date" value="${data?.end_date||''}"></div>
       </div>
-      <div class="field-row">
-        <div class="field"><label>Km inicial</label><input type="number" id="f_km_start" value="${data?.km_start ?? ''}"></div>
-        <div class="field"><label>Km final</label><input type="number" id="f_km_end" value="${data?.km_end ?? ''}"></div>
-      </div>
-      <div class="field"><label>Estado</label>
-        <select id="f_status">
-          <option value="planificado" ${data?.status==='planificado'||!data?'selected':''}>Planificado</option>
-          <option value="en_curso" ${data?.status==='en_curso'?'selected':''}>En curso</option>
-          <option value="finalizado" ${data?.status==='finalizado'?'selected':''}>Finalizado</option>
-        </select>
-      </div>
+      <div class="field"><label>Km totales</label><input type="number" id="f_km_total" value="${data?.km_total ?? ''}"></div>
       <div class="field"><label>Notas</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
     `;
   }
   if(type === 'rest'){
     inner = `
       <h2>${isEdit?'Editar':'Nuevo'} descanso</h2>
-      <div class="field-row">
-        <div class="field"><label>Camionero</label><select id="f_driver">${driverOptions(data?.driver_id)}</select></div>
-        <div class="field"><label>Viaje asociado</label><select id="f_trip">${tripOptions(data?.trip_id)}</select></div>
-      </div>
-      <div class="field"><label>Tipo</label>
+      <div class="field"><label>Camionero *</label><select id="f_driver">${driverOptions(data?.driver_id, true)}</select></div>
+      <div class="field"><label>Viaje asociado *</label><select id="f_trip">${tripOptions(data?.trip_id, true)}</select></div>
+      <div class="field"><label>Tipo de descanso</label>
         <select id="f_type">
           <option value="descanso" ${!data||data?.rest_type==='descanso'?'selected':''}>Descanso</option>
           <option value="comida" ${data?.rest_type==='comida'?'selected':''}>Comida</option>
@@ -875,10 +1066,9 @@ function renderModal(){
         </select>
       </div>
       <div class="field-row">
-        <div class="field"><label>Inicio</label><input type="datetime-local" id="f_start" value="${toLocalInput(data?.start_time)}"></div>
-        <div class="field"><label>Fin</label><input type="datetime-local" id="f_end" value="${toLocalInput(data?.end_time)}"></div>
+        <div class="field"><label>Hora inicio *</label><input type="datetime-local" id="f_start" value="${toLocalInput(data?.start_time)}"></div>
+        <div class="field"><label>Hora fin *</label><input type="datetime-local" id="f_end" value="${toLocalInput(data?.end_time)}"></div>
       </div>
-      <div class="field"><label>Km en el momento del descanso</label><input type="number" id="f_km" value="${data?.km_at_rest ?? ''}"></div>
       <div class="field"><label>Notas</label><textarea id="f_notes">${esc(data?.notes)}</textarea></div>
     `;
   }
@@ -938,11 +1128,11 @@ async function saveModal(type, data){
   try{
     if(type === 'driver'){
       const name = document.getElementById('f_name').value.trim();
-      if(!name){ toast('El nombre es obligatorio.', 'error'); return; }
+      const phone = document.getElementById('f_phone').value.trim();
+      if(!name || !phone){ toast('El nombre y el teléfono son obligatorios.', 'error'); return; }
       payload = {
         name,
-        phone: document.getElementById('f_phone').value.trim() || null,
-        license_number: document.getElementById('f_license').value.trim() || null,
+        phone,
         notes: document.getElementById('f_notes').value.trim() || null,
       };
     }
@@ -955,22 +1145,23 @@ async function saveModal(type, data){
         origin, destination,
         start_date: document.getElementById('f_start_date').value || null,
         end_date: document.getElementById('f_end_date').value || null,
-        km_start: document.getElementById('f_km_start').value ? Number(document.getElementById('f_km_start').value) : null,
-        km_end: document.getElementById('f_km_end').value ? Number(document.getElementById('f_km_end').value) : null,
-        status: document.getElementById('f_status').value,
+        km_total: document.getElementById('f_km_total').value ? Number(document.getElementById('f_km_total').value) : null,
         notes: document.getElementById('f_notes').value.trim() || null,
       };
     }
     if(type === 'rest'){
+      const driver_id = document.getElementById('f_driver').value;
+      const trip_id = document.getElementById('f_trip').value;
       const start = document.getElementById('f_start').value;
-      if(!start){ toast('La hora de inicio es obligatoria.', 'error'); return; }
+      const end = document.getElementById('f_end').value;
+      if(!driver_id || !trip_id){ toast('Debes seleccionar conductor y viaje.', 'error'); return; }
+      if(!start || !end){ toast('Las horas de inicio y fin son obligatorias.', 'error'); return; }
       payload = {
-        driver_id: document.getElementById('f_driver').value || null,
-        trip_id: document.getElementById('f_trip').value || null,
+        driver_id,
+        trip_id,
         rest_type: document.getElementById('f_type').value,
         start_time: new Date(start).toISOString(),
-        end_time: document.getElementById('f_end').value ? new Date(document.getElementById('f_end').value).toISOString() : null,
-        km_at_rest: document.getElementById('f_km').value ? Number(document.getElementById('f_km').value) : null,
+        end_time: new Date(end).toISOString(),
         notes: document.getElementById('f_notes').value.trim() || null,
       };
     }
@@ -1007,11 +1198,13 @@ async function saveModal(type, data){
 }
 
 /* =========================================================
-   INICIO
+   ARRANQUE
 ========================================================= */
-(async function init(){
-  await loadAll();
-})();
+function initApp(){
+  loadAll();
+}
+
+checkAuth();
 </script>
 </body>
 </html>
