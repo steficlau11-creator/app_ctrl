@@ -330,11 +330,16 @@ async function supaRequest(path, opts={}){
     headers['Prefer'] = 'return=representation';
   }
   const url = cfg.url.replace(/\/$/,'') + '/rest/v1/' + path;
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
+  let res;
+  try{
+    res = await fetch(url, {
+      method,
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  }catch(networkErr){
+    throw new Error('No se pudo conectar con ' + cfg.url + '. Revisa: 1) que el proyecto no esté en pausa (Supabase lo pausa tras inactividad, hay que pulsar "Restore project" en el dashboard), 2) que la URL esté bien escrita, 3) tu conexión a internet.');
+  }
   if(!res.ok){
     let msg = 'Error ' + res.status;
     try{ const j = await res.json(); msg += ': ' + (j.message || JSON.stringify(j)); }catch(e){}
