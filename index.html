@@ -98,7 +98,9 @@
     display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-faint);
     padding:8px 10px;border-radius:8px;background:var(--bg-elev);
   }
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);flex:none;}
+  .dot.ok{background:var(--green);}
+  .dot.off{background:var(--red);}
 
   .main{flex:1;min-width:0;display:flex;flex-direction:column;}
   .topbar{
@@ -289,14 +291,91 @@
 <script>
 /* =========================================================
    ### CREDENCIALES ###
-   Puedes modificar aquí el usuario y la contraseña por defecto.
+   Modifica aquí el usuario y la contraseña.
 ========================================================= */
 const DEFAULT_AUTH = {
   user: 'Alina',
   pass: '191985'
 };
-/* ========================================================= */
 
+/* =========================================================
+   ### CONEXIÓN SUPABASE ###
+========================================================= */
+const SUPABASE_URL = 'https://dgfuasqbcndthqealepn.supabase.co/rest/v1/';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnZnVhc3FiY25kdGhxZWFsZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NTYzNTEsImV4cCI6MjEwMjEzMjM1MX0.mzmDnBku5Yk8UoQJrtwXfc5mBikGtvYlIqhTy55du_k';
+
+async function supaRequest(path, opts = {}) {
+  const method = opts.method || 'GET';
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+  };
+  if (method !== 'GET' && method !== 'DELETE') {
+    headers['Content-Type'] = 'application/json';
+    headers['Prefer'] = 'return=representation';
+  }
+
+  let res;
+  try {
+    res = await fetch(SUPABASE_URL + path, {
+      method,
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch(networkErr) {
+    throw new Error('No se pudo contactar con Supabase. Revisa tu conexión a internet.');
+  }
+
+  if (!res.ok) {
+    let msg = 'Error ' + res.status;
+    try { 
+      const j = await res.json(); 
+      msg += ': ' + (j.message || j.error || JSON.stringify(j)); 
+    } catch (e) {}
+    throw new Error(msg);
+  }
+
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+const api = {
+  drivers: {
+    list: () => supaRequest('drivers?select=*&order=created_at.desc'),
+    create: (d) => supaRequest('drivers', {method:'POST', body:d}),
+    update: (id, d) => supaRequest('drivers?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('drivers?id=eq.'+id, {method:'DELETE'}),
+  },
+  trips: {
+    list: () => supaRequest('trips?select=*&order=created_at.desc'),
+    create: (d) => supaRequest('trips', {method:'POST', body:d}),
+    update: (id, d) => supaRequest('trips?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('trips?id=eq.'+id, {method:'DELETE'}),
+  },
+  rests: {
+    list: () => supaRequest('rests?select=*&order=start_time.desc'),
+    create: (d) => supaRequest('rests', {method:'POST', body:d}),
+    update: (id, d) => supaRequest('rests?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('rests?id=eq.'+id, {method:'DELETE'}),
+  },
+  notes: {
+    list: () => supaRequest('notes?select=*&order=reminder_at.asc.nullslast'),
+    create: (d) => supaRequest('notes', {method:'POST', body:d}),
+    update: (id, d) => supaRequest('notes?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('notes?id=eq.'+id, {method:'DELETE'}),
+  },
+  links: {
+    list: () => supaRequest('links?select=*&order=created_at.desc'),
+    create: (d) => supaRequest('links', {method:'POST', body:d}),
+    update: (id, d) => supaRequest('links?id=eq.'+id, {method:'PATCH', body:d}),
+    remove: (id) => supaRequest('links?id=eq.'+id, {method:'DELETE'}),
+  },
+};
+
+/* =========================================================
+   ESTADO DE LA APLICACIÓN
+========================================================= */
 const state = {
   tab: 'inicio',
   drivers: [],
@@ -305,6 +384,7 @@ const state = {
   notes: [],
   links: [],
   loaded: false,
+  connectionError: null,
   modal: null,
   selectedDriverId: null,
   filterFrom: '',
@@ -320,62 +400,6 @@ const TABS = [
   {id:'enlaces', label:'Enlaces de interés', icon:'&#128279;'},
   {id:'perfil', label:'Detalle Camionero', hidden: true}
 ];
-
-/* =========================================================
-   PERSISTENCIA LOCAL (localStorage)
-========================================================= */
-const storage = {
-  get: (key) => {
-    try {
-      return JSON.parse(localStorage.getItem('rutactrl_' + key) || '[]');
-    } catch(e) {
-      return [];
-    }
-  },
-  set: (key, data) => {
-    localStorage.setItem('rutactrl_' + key, JSON.stringify(data));
-  }
-};
-
-function createCrud(table) {
-  return {
-    list: async () => storage.get(table),
-    create: async (item) => {
-      const items = storage.get(table);
-      const newItem = { 
-        ...item, 
-        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'id_' + Date.now() + Math.random().toString(36).substr(2, 9), 
-        created_at: new Date().toISOString() 
-      };
-      items.unshift(newItem);
-      storage.set(table, items);
-      return newItem;
-    },
-    update: async (id, data) => {
-      const items = storage.get(table);
-      const idx = items.findIndex(x => String(x.id) === String(id));
-      if (idx !== -1) {
-        items[idx] = { ...items[idx], ...data };
-        storage.set(table, items);
-        return items[idx];
-      }
-      return null;
-    },
-    remove: async (id) => {
-      const items = storage.get(table).filter(x => String(x.id) !== String(id));
-      storage.set(table, items);
-      return true;
-    }
-  };
-}
-
-const api = {
-  drivers: createCrud('drivers'),
-  trips: createCrud('trips'),
-  rests: createCrud('rests'),
-  notes: createCrud('notes'),
-  links: createCrud('links'),
-};
 
 /* =========================================================
    UTILIDADES
@@ -468,7 +492,7 @@ function logout(){
 }
 
 /* =========================================================
-   CARGA DE DATOS
+   CARGA DE DATOS DESDE SUPABASE
 ========================================================= */
 async function loadAll(){
   try{
@@ -481,8 +505,10 @@ async function loadAll(){
     state.notes = notes || [];
     state.links = links || [];
     state.loaded = true;
+    state.connectionError = null;
   }catch(e){
-    toast('Error al leer datos locales: ' + e.message, 'error');
+    state.connectionError = e.message;
+    toast(e.message, 'error');
   }
   render();
 }
@@ -509,8 +535,8 @@ function render(){
       </ul>
       <div class="sidebar-foot">
         <div class="status-pill">
-          <span class="dot"></span>
-          Modo Local Activo
+          <span class="dot ${state.connectionError ? 'off' : (state.loaded?'ok':'')}"></span>
+          ${state.connectionError ? 'Error en Supabase' : (state.loaded ? 'Conectado a BD' : 'Conectando…')}
         </div>
         <button class="btn btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">Cerrar Sesión</button>
       </div>
@@ -583,7 +609,13 @@ function bindNav(){
 }
 
 function renderContent(){
-  if(!state.loaded) return `<div class="loading">Cargando datos…</div>`;
+  if(state.connectionError){
+    return `<div class="empty">Error al sincronizar con Supabase.<br><br>
+      <span style="color:var(--red);font-family:var(--font-mono);font-size:12.5px;">${esc(state.connectionError)}</span><br><br>
+      <button class="btn btn-sm btn-primary" data-action="retry-load">Reintentar Conexión</button></div>`;
+  }
+  if(!state.loaded) return `<div class="loading">Cargando datos desde Supabase…</div>`;
+
   if(state.tab === 'inicio') return renderInicio();
   if(state.tab === 'camioneros') return renderCamioneros();
   if(state.tab === 'viajes') return renderViajes();
@@ -595,6 +627,9 @@ function renderContent(){
 }
 
 function bindTabContent(){
+  const retryBtn = document.querySelector('[data-action="retry-load"]');
+  if(retryBtn) retryBtn.addEventListener('click', () => loadAll());
+
   if(state.tab === 'inicio') bindInicio();
   if(state.tab === 'camioneros') bindCamioneros();
   if(state.tab === 'viajes') bindViajes();
@@ -725,7 +760,6 @@ function renderPerfil(){
   const fromTime = state.filterFrom ? new Date(state.filterFrom + 'T00:00:00').getTime() : 0;
   const toTime = state.filterTo ? new Date(state.filterTo + 'T23:59:59').getTime() : Infinity;
 
-  // Filtrar viajes del conductor en rango
   const tripsInRange = state.trips.filter(t => {
     if(String(t.driver_id) !== String(driver.id)) return false;
     const tDate = new Date(t.start_date || t.created_at).getTime();
@@ -734,7 +768,6 @@ function renderPerfil(){
 
   const kmPeriodo = tripsInRange.reduce((s,t)=> s + Number(t.km_total||0), 0);
 
-  // Filtrar descansos del conductor en rango
   const restsInRange = state.rests.filter(r => {
     if(String(r.driver_id) !== String(driver.id)) return false;
     const rDate = new Date(r.start_time).getTime();
